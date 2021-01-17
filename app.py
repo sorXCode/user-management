@@ -8,6 +8,7 @@ from config import config
 
 db = SQLAlchemy()
 login_manager = LoginManager()
+login_manager.login_view = "/"
 
 def create_app(environment):
     def init_dependencies(app):
