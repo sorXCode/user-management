@@ -12,7 +12,7 @@ user_bp = Blueprint("user_bp", __name__)
 class Homepage(MethodView):
     def get(self):
         if current_user.is_authenticated:
-            return redirect("/dashboard")
+            return redirect(url_for("user_bp.dashboard"))
 
         login_form = LoginForm()
         return render_template("homepage.html", form=login_form)
@@ -26,7 +26,7 @@ class Homepage(MethodView):
                                   password=login_form.password.data)
 
                 login_user(user)
-                return redirect("/dashboard")
+                return redirect(url_for("user_bp.dashboard"))
         except Exception as e:
             flash("".join(e.args))
         return render_template("homepage.html", form=login_form)
@@ -38,7 +38,7 @@ class LogoutUser(View):
     def dispatch_request(self):
         logout_user()
         flash("Successfully logged out")
-        return redirect("/")
+        return redirect(url_for("user_bp.homepage"))
 
 
 class Dashboard(MethodView):
