@@ -13,12 +13,17 @@ def create_app(environment):
     def init_dependencies(app):
         db.init_app(app)
         login_manager.init_app(app)
+    
+    def register_blueprints(app):
+        from user.views import user_bp
+        app.register_blueprint(user_bp)
 
     app = Flask(__name__)
     app.config.from_object(config[environment])
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
     
     init_dependencies(app)
+    register_blueprints(app)
     
     return app
 
