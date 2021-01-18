@@ -4,7 +4,7 @@ from flask.views import MethodView, View
 from flask_login import current_user, login_required, login_user, logout_user
 
 from .forms import LoginForm
-from .models import User
+from .models import Activity, User
 
 user_bp = Blueprint("user_bp", __name__)
 
@@ -26,6 +26,7 @@ class Homepage(MethodView):
                                   password=login_form.password.data)
 
                 login_user(user)
+                Activity.log_user(user)
                 return redirect(url_for("user_bp.dashboard"))
         except Exception as e:
             flash("".join(e.args))
@@ -45,7 +46,14 @@ class Dashboard(MethodView):
     decorators = [login_required, ]
 
     def get(self):
-        return render_template("dashboard.html")
+        user_activities = Activity.get_all_activities_for_user(user_id=current_user.id)
+        print(user_activities)
+        return render_template("dashboard.html", activities=user_activities)
+
+class Activities(View):
+    def get(self, user_id):
+        pass
+
 
 
 user_bp.add_url_rule("/", view_func=Homepage.as_view("homepage"))
