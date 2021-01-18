@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+# load envrionment variables from '.env' file
+load_dotenv()
 
 import os
 from flask_migrate import Migrate
