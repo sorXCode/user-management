@@ -46,15 +46,16 @@ class Dashboard(MethodView):
     decorators = [login_required, ]
 
     def get(self):
-        user_activities = Activity.get_all_activities_for_user(user_id=current_user.id)
-        print(user_activities)
-
         form = generate_account_creation_form()
-        return render_template("dashboard.html", activities=user_activities, form=form)
+        return render_template("dashboard.html", form=form)
 
-class Activities(View):
+class Activities(MethodView):
+    decorators = [login_required, ]
+
     def get(self, user_id):
-        pass
+        activities = Activity.get_all_activities_for_user(user_id=user_id)
+        return render_template("activities.html")
+
 
 class AccountCreation(MethodView):
     decorators = [login_required, ]
@@ -87,6 +88,7 @@ def generate_account_creation_form():
     return form
 
 user_bp.add_url_rule("/", view_func=Homepage.as_view("homepage"))
-user_bp.add_url_rule("/dashboard", view_func=Dashboard.as_view("dashboard"))
-user_bp.add_url_rule("/logout", view_func=LogoutUser.as_view("logout"))
-user_bp.add_url_rule("/register", view_func=AccountCreation.as_view("register"))
+user_bp.add_url_rule("/dashboard/", view_func=Dashboard.as_view("dashboard"))
+user_bp.add_url_rule("/logout/", view_func=LogoutUser.as_view("logout"))
+user_bp.add_url_rule("/register/", view_func=AccountCreation.as_view("register"))
+user_bp.add_url_rule("/activities/<user_id>/", view_func=Activities.as_view("activities"))

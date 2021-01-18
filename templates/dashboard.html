@@ -17,4 +17,14 @@
     {{ format_form(form=form, action="/register", submit_value="Create Account") }}
 {% endif %}
 
+
+<div id="activity-graph">
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+    $.get("/activities/{{current_user.id}}/", function(data, status){
+        $("#activity-graph").append(data)
+    })
 {% endblock %}
