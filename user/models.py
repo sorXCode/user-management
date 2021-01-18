@@ -1,7 +1,7 @@
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login_manager
-from .exceptions import UserExists, UserNotFound, InvalidPassword
+from .exceptions import UserExists, UserNotFound, InvalidPassword, Unauthorized
 from datetime import date
 
 class User(UserMixin, db.Model):
@@ -32,6 +32,9 @@ class User(UserMixin, db.Model):
 
     @classmethod
     def create_user(cls, email, password, is_admin=False, is_super_admin=False):
+        if not (current_user.is_admin or current_user.is_super_admin):
+            raise Unauthorized
+
         if cls.get_user(email=email):
             raise UserExists
 
@@ -42,6 +45,18 @@ class User(UserMixin, db.Model):
         db.session.commit()
 
         return user
+    
+    @classmethod
+    def create_super_admin(cls, email, password):
+        if current_user.is_super_admin:
+            return cls.create_user(email=email, password=password, is_super_admin=True)
+        raise Unauthorized
+    
+    @classmethod
+    def create_admin(cls, email, password):
+        if current_user.is_admin or current_user.is_super_admin:
+            return cls.create_user(email=email, password=password, is_admin=True)
+        raise Unauthorized
 
     @classmethod
     def login(cls, email, password):

@@ -1,17 +1,6 @@
+{% from 'macros.html' import format_form %}
 {% extends "base.html" %}
 
 {% block content %}
-    <form action="" method="POST">
-        {{ form.hidden_tag() }}
-        {% for field in form if field.widget.input_type != 'hidden' %}
-            <p>
-                {{ field.label }}<br>
-                {{ field(size=32) }}<br>
-                {% for error in field.errors %}
-                <span style="color: red">{{ error }}</span>
-                {% endfor %}
-            </p>
-        {% endfor %}
-        <input type="submit" value="Sign In">
-    </form>
+    {{ format_form(form=form, action="", submit_value="Sign In") }}
 {% endblock %}

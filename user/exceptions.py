@@ -20,3 +20,7 @@ class InvalidPassword(Exception):
 
     def __init__(self, message="Invalid password"):
         super().__init__(message)
+
+class Unauthorized(Exception):
+    def __init__(self, message="User does not have priviledge to perform this action, contact support"):
+        super().__init__(message)
