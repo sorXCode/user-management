@@ -12,6 +12,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String, nullable=False)
     created_at = db.Column(
         db.TIMESTAMP, server_default=db.func.current_timestamp(), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
+    is_super_admin = db.Column(db.Boolean, default=False)
 
     @property
     def password(self):
@@ -29,11 +31,11 @@ class User(UserMixin, db.Model):
         return cls.query.filter_by(email=email).first()
 
     @classmethod
-    def create_user(cls, email, password):
+    def create_user(cls, email, password, is_admin=False, is_super_admin=False):
         if cls.get_user(email=email):
             raise UserExists
 
-        user = cls(email=email)
+        user = cls(email=email, is_admin=is_admin, is_super_admin=is_super_admin)
         user.password = password
 
         db.session.add(user)
@@ -59,3 +61,4 @@ class User(UserMixin, db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
