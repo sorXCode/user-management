@@ -196,17 +196,25 @@ class Activity(db.Model):
     def get_user_latest_activity_for_day(cls, user_id):
         return cls.query.filter_by(user_id=user_id, request_date=f"{date.today()} 00:00:00.000000").first()
 
-    def make_tuple(self):
-        """
-        returns tuple of (day_of_year, count) tuple ::
-        e.g (1, 23) to indicate 23 visits on the first day of the year
-        """
-
-        return (
-            self.request_date.timetuple().tm_yday, self.count
-        )
-
     @classmethod
     def get_all_activities_for_user(cls, user_id):
+        """
+            returns dict of {day_of_year: count, ..., min:x, max:y} where min=lowest count, max=highest count
+            e.g {1: 23, ...} to indicate 23 visits on the first day of the year
+        """
         activities = cls.query.filter_by(user_id=user_id).all()
-        return list(map(lambda activity: activity.make_tuple(), activities))
+        min_count, max_count = 0, 0
+        values_dict = {}
+        
+        for activity in activities:
+            count = activity.count
+
+            values_dict[activity.request_date.timetuple().tm_yday] = count
+            if min_count > count:
+                min_count = count
+            elif max_count < count:
+                max_count = count
+        
+        values_dict["min_count"], values_dict["max_count"] = min_count, max_count
+        return values_dict
+

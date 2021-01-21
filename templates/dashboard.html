@@ -13,8 +13,13 @@
     </ul>
 {% endif %}
 
+
 {% if current_user.is_admin or current_user.is_super_admin %}
-    {{ format_form(form=form, action="/register", submit_value="Create Account") }}
+    <a href="#registerModal" rel="modal:open">Create Account</a>
+    <div id="registerModal" class="modal">
+        {{ format_form(form=form, action="/register/", submit_value="Create Account") }}
+    </div>
+    
 {% endif %}
 
 
@@ -27,4 +32,6 @@
     $.get("/activities/{{current_user.id}}/", function(data, status){
         $("#activity-graph").append(data)
     })
+
+    
 {% endblock %}

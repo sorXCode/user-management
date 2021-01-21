@@ -63,7 +63,7 @@ class Activities(MethodView):
 
     def get(self, user_id):
         activities = Activity.get_all_activities_for_user(user_id=user_id)
-        return render_template("activities.html")
+        return render_template("activities.html", activities=activities)
 
 
 class AccountCreation(MethodView):
