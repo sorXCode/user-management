@@ -5,6 +5,7 @@ from .exceptions import UserExists, UserNotFound, InvalidPassword, Unauthorized
 from datetime import date
 from sqlalchemy.orm import backref
 
+
 class Permission:
     USER = 0
     ADMIN = 1
@@ -19,7 +20,6 @@ class Role(db.Model):
     permissions = db.Column(db.Integer)
     users = db.relationship('User', backref='role', lazy='dynamic')
 
-    
     @classmethod
     def insert_roles(cls):
         roles = {
@@ -51,9 +51,10 @@ class Relation(db.Model):
         db.session.add(link)
         db.session.commit()
         return link
-    
+
     def __repr__(self):
         return f"{self.parent.email} -> {self.child.email}"
+
 
 class User(UserMixin, db.Model):
     __tablename__ = "users"
@@ -63,38 +64,25 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String, nullable=False)
     created_at = db.Column(
         db.TIMESTAMP, server_default=db.func.current_timestamp(), nullable=False)
-    updated_on = db.Column(db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now(), nullable=True)
+    updated_on = db.Column(db.DateTime, server_default=db.func.now(
+    ), server_onupdate=db.func.now(), nullable=True)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
-    upline = db.relationship('Relation', backref='upline', foreign_keys="[Relation.child_id]", uselist=False, lazy=True)
-    downlines = db.relationship('Relation', backref='downline', foreign_keys="[Relation.parent_id]", lazy='dynamic')
-
-    
-    # downline_id = db.Column(db.Integer, db.ForeignKey('creation.id'))
-    # upline = db.Column(db.Integer)
+    upline = db.relationship('Relation', backref='upline',
+                             foreign_keys="[Relation.child_id]", uselist=False, lazy=True)
+    downlines = db.relationship(
+        'Relation', backref='downline', foreign_keys="[Relation.parent_id]", lazy='dynamic')
 
     @classmethod
     def first_user(cls):
         if cls.query.filter_by().first():
-           return None
-           
+            return None
+
         first_user_role = "super_admin"
         user = cls(email="root@root.com")
         user.password = "root"
         user.role = Role.query.filter_by(name=first_user_role).first()
         db.session.commit()
         return True
-        
-
-    # @property
-    # def downlines(self):
-    #     return [int(x) for x in self._downlines(";")]
-
-    # @downlines.setter
-    # def downlines(self, value):
-    #     if self._downlines:
-    #         self._downlines = self._downlines + f";{value}"
-    #     else:
-    #         self._downlines = f"{value}"
 
     @property
     def password(self):
@@ -124,7 +112,7 @@ class User(UserMixin, db.Model):
 
         user.password = password
 
-        # give created user a role
+        # give created user appropriate role
         if is_super_admin:
             user.role = Role.query.filter_by(name="super_admin").first()
         elif is_admin:
@@ -136,7 +124,8 @@ class User(UserMixin, db.Model):
         db.session.add(user)
         db.session.commit()
 
-        Relation.establish_relationship(parent_id=current_user.id, child_id=user.id)
+        Relation.establish_relationship(
+            parent_id=current_user.id, child_id=user.id)
 
         return user
 
@@ -207,6 +196,17 @@ class Activity(db.Model):
     def get_user_latest_activity_for_day(cls, user_id):
         return cls.query.filter_by(user_id=user_id, request_date=f"{date.today()} 00:00:00.000000").first()
 
+    def make_tuple(self):
+        """
+        returns tuple of (day_of_year, count) tuple ::
+        e.g (1, 23) to indicate 23 visits on the first day of the year
+        """
+
+        return (
+            self.request_date.timetuple().tm_yday, self.count
+        )
+
     @classmethod
     def get_all_activities_for_user(cls, user_id):
-        return cls.query.filter_by(user_id=user_id).all()
+        activities = cls.query.filter_by(user_id=user_id).all()
+        return list(map(lambda activity: activity.make_tuple(), activities))
