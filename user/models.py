@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login_manager
 from .exceptions import UserExists, UserNotFound, InvalidPassword, Unauthorized
 from datetime import date
-
+from sqlalchemy.orm import backref
 
 class Permission:
     USER = 0
@@ -39,6 +39,22 @@ class Role(db.Model):
         return created_role
 
 
+class Relation(db.Model):
+    __tablename__ = "Relations"
+    id = db.Column(db.Integer, primary_key=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    child_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    @classmethod
+    def establish_relationship(cls, parent_id, child_id):
+        link = cls(parent_id=parent_id, child_id=child_id)
+        db.session.add(link)
+        db.session.commit()
+        return link
+    
+    def __repr__(self):
+        return f"{self.parent.email} -> {self.child.email}"
+
 class User(UserMixin, db.Model):
     __tablename__ = "users"
 
@@ -49,10 +65,11 @@ class User(UserMixin, db.Model):
         db.TIMESTAMP, server_default=db.func.current_timestamp(), nullable=False)
     updated_on = db.Column(db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now(), nullable=True)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
-    upline_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    upline = db.relationship('User', backref='upline', lazy='dynamic')
+    upline = db.relationship('Relation', backref='upline', foreign_keys="[Relation.child_id]", uselist=False, lazy=True)
+    downlines = db.relationship('Relation', backref='downline', foreign_keys="[Relation.parent_id]", lazy='dynamic')
 
-    _downlines = db.Column(db.String, default="")
+    
+    # downline_id = db.Column(db.Integer, db.ForeignKey('creation.id'))
     # upline = db.Column(db.Integer)
 
     @classmethod
@@ -68,16 +85,16 @@ class User(UserMixin, db.Model):
         return True
         
 
-    @property
-    def downlines(self):
-        return [int(x) for x in self._downlines(";")]
+    # @property
+    # def downlines(self):
+    #     return [int(x) for x in self._downlines(";")]
 
-    @downlines.setter
-    def downlines(self, value):
-        if self._downlines:
-            self._downlines = self._downlines + f";{value}"
-        else:
-            self._downlines = f"{value}"
+    # @downlines.setter
+    # def downlines(self, value):
+    #     if self._downlines:
+    #         self._downlines = self._downlines + f";{value}"
+    #     else:
+    #         self._downlines = f"{value}"
 
     @property
     def password(self):
@@ -106,7 +123,6 @@ class User(UserMixin, db.Model):
                    is_super_admin=is_super_admin)
 
         user.password = password
-        user.upline = current_user.id
 
         # give created user a role
         if is_super_admin:
@@ -116,15 +132,11 @@ class User(UserMixin, db.Model):
         else:
             user.role = Role.query.filter_by(name="user").first()
 
-
+        # add and commit new user to get an id which would be used to link the user to its creator
         db.session.add(user)
         db.session.commit()
 
-        upline = User.query.get(current_user.id)
-        upline.downlines = user.id
-
-        db.session.add(upline)
-        db.session.commit()
+        Relation.establish_relationship(parent_id=current_user.id, child_id=user.id)
 
         return user
 
