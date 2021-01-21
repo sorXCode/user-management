@@ -4,9 +4,18 @@ from flask.views import MethodView, View
 from flask_login import current_user, login_required, login_user, logout_user
 
 from .forms import LoginForm, AccountCreationForm
-from .models import Activity, User
+from .models import Activity, User, Role
 
 user_bp = Blueprint("user_bp", __name__)
+
+
+@user_bp.before_app_first_request
+def create_roles_and_one_super_admin():
+    if Role.insert_roles():
+        print(f"created roles at app start")
+    if User.first_user():
+        print(f"created super_admin at app start")
+
 
 
 class Homepage(MethodView):
@@ -81,7 +90,7 @@ def generate_account_creation_form():
     form = AccountCreationForm()
 
     if current_user.is_super_admin:
-        form.user_type.choices = [("admin", "admin"),]
+        form.user_type.choices = [("super-admin", "super-admin"), ("admin", "admin"),]
     elif current_user.is_admin:
         form.user_type.choices = [("admin", "admin"), ("user", "user")]
     

@@ -4,6 +4,41 @@ from app import db, login_manager
 from .exceptions import UserExists, UserNotFound, InvalidPassword, Unauthorized
 from datetime import date
 
+
+class Permission:
+    USER = 0
+    ADMIN = 1
+    SUPER_ADMIN = 10
+
+
+class Role(db.Model):
+    __tablename__ = 'roles'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(60), unique=True, nullable=False)
+    permissions = db.Column(db.Integer)
+    users = db.relationship('User', backref='role', lazy='dynamic')
+
+    
+    @classmethod
+    def insert_roles(cls):
+        roles = {
+            "user": Permission.USER,
+            "admin": Permission.ADMIN,
+            "super_admin": Permission.SUPER_ADMIN,
+        }
+        created_role = False
+        for role in roles:
+            role_object = cls.query.filter_by(name=role).first()
+            if role_object:
+                continue
+            role_object = cls(name=role, permissions=roles[role])
+            db.session.add(role_object)
+            created_role = True
+        db.session.commit()
+        return created_role
+
+
 class User(UserMixin, db.Model):
     __tablename__ = "users"
 
@@ -12,8 +47,37 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String, nullable=False)
     created_at = db.Column(
         db.TIMESTAMP, server_default=db.func.current_timestamp(), nullable=False)
-    is_admin = db.Column(db.Boolean, default=False)
-    is_super_admin = db.Column(db.Boolean, default=False)
+    updated_on = db.Column(db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now(), nullable=True)
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
+    upline_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    upline = db.relationship('User', backref='upline', lazy='dynamic')
+
+    _downlines = db.Column(db.String, default="")
+    # upline = db.Column(db.Integer)
+
+    @classmethod
+    def first_user(cls):
+        if cls.query.filter_by().first():
+           return None
+           
+        first_user_role = "super_admin"
+        user = cls(email="root@root.com")
+        user.password = "root"
+        user.role = Role.query.filter_by(name=first_user_role).first()
+        db.session.commit()
+        return True
+        
+
+    @property
+    def downlines(self):
+        return [int(x) for x in self._downlines(";")]
+
+    @downlines.setter
+    def downlines(self, value):
+        if self._downlines:
+            self._downlines = self._downlines + f";{value}"
+        else:
+            self._downlines = f"{value}"
 
     @property
     def password(self):
@@ -32,29 +96,47 @@ class User(UserMixin, db.Model):
 
     @classmethod
     def create_user(cls, email, password, is_admin=False, is_super_admin=False):
-        if not (current_user.is_admin or current_user.is_super_admin):
+        if not (current_user.is_admin() or current_user.is_super_admin()):
             raise Unauthorized
 
         if cls.get_user(email=email):
             raise UserExists
 
-        user = cls(email=email, is_admin=is_admin, is_super_admin=is_super_admin)
+        user = cls(email=email, is_admin=is_admin,
+                   is_super_admin=is_super_admin)
+
         user.password = password
+        user.upline = current_user.id
+
+        # give created user a role
+        if is_super_admin:
+            user.role = Role.query.filter_by(name="super_admin").first()
+        elif is_admin:
+            user.role = Role.query.filter_by(name="admin").first()
+        else:
+            user.role = Role.query.filter_by(name="user").first()
+
 
         db.session.add(user)
         db.session.commit()
 
+        upline = User.query.get(current_user.id)
+        upline.downlines = user.id
+
+        db.session.add(upline)
+        db.session.commit()
+
         return user
-    
+
     @classmethod
     def create_super_admin(cls, email, password):
-        if current_user.is_super_admin:
+        if current_user.is_super_admin():
             return cls.create_user(email=email, password=password, is_super_admin=True)
         raise Unauthorized
-    
+
     @classmethod
     def create_admin(cls, email, password):
-        if current_user.is_admin or current_user.is_super_admin:
+        if current_user.is_admin() or current_user.is_super_admin():
             return cls.create_user(email=email, password=password, is_admin=True)
         raise Unauthorized
 
@@ -69,10 +151,20 @@ class User(UserMixin, db.Model):
 
         return user
 
-    
+    def can(self, permissions):
+        return self.role is not None and \
+            (self.role.permissions & permissions) == permissions
+
+    def is_admin(self):
+        return self.can(Permission.ADMIN)
+
+    def is_super_admin(self):
+        return self.can(Permission.SUPER_ADMIN)
+
     def __repr__(self):
         return f"<User {self.email}"
-    
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -98,7 +190,7 @@ class Activity(db.Model):
 
         db.session.add(latest_activity)
         db.session.commit()
-    
+
     @classmethod
     def get_user_latest_activity_for_day(cls, user_id):
         return cls.query.filter_by(user_id=user_id, request_date=f"{date.today()} 00:00:00.000000").first()
