@@ -17,7 +17,6 @@ def create_roles_and_one_super_admin():
         print(f"created super_admin at app start")
 
 
-
 class Homepage(MethodView):
     def get(self):
         if current_user.is_authenticated:
@@ -58,6 +57,7 @@ class Dashboard(MethodView):
         form = generate_account_creation_form()
         return render_template("dashboard.html", form=form)
 
+
 class Activities(MethodView):
     decorators = [login_required, ]
 
@@ -74,9 +74,10 @@ class AccountCreation(MethodView):
         try:
             if form.validate_on_submit():
                 create_account = {"super-admin": User.create_super_admin,
-                                "admin": User.create_admin,
-                                "user": User.create_user}
-                create_account[form.user_type.data](email=form.email.data, password=form.password.data)
+                                  "admin": User.create_admin,
+                                  "user": User.create_user}
+                create_account[form.user_type.data](
+                    email=form.email.data, password=form.password.data)
                 flash(f"{form.email.data} account created")
             else:
                 flash("cannot create account")
@@ -90,14 +91,18 @@ def generate_account_creation_form():
     form = AccountCreationForm()
 
     if current_user.is_super_admin:
-        form.user_type.choices = [("super-admin", "super-admin"), ("admin", "admin"),]
+        form.user_type.choices = [
+            ("super-admin", "super-admin"), ("admin", "admin"), ]
     elif current_user.is_admin:
         form.user_type.choices = [("admin", "admin"), ("user", "user")]
-    
+
     return form
+
 
 user_bp.add_url_rule("/", view_func=Homepage.as_view("homepage"))
 user_bp.add_url_rule("/dashboard/", view_func=Dashboard.as_view("dashboard"))
 user_bp.add_url_rule("/logout/", view_func=LogoutUser.as_view("logout"))
-user_bp.add_url_rule("/register/", view_func=AccountCreation.as_view("register"))
-user_bp.add_url_rule("/activities/<user_id>/", view_func=Activities.as_view("activities"))
+user_bp.add_url_rule(
+    "/register/", view_func=AccountCreation.as_view("register"))
+user_bp.add_url_rule("/activities/<user_id>/",
+                     view_func=Activities.as_view("activities"))
