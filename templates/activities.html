@@ -131,7 +131,7 @@
     {% set max_count = activities["max_count"] %}
     {% for day in range(1,367) %}
     {% set val = (activities.get(day, 0)/max_count) * 3 %}
-      squares.insertAdjacentHTML('beforeend', '<li data-level="{{ val|int }}"></li>');
+      squares.insertAdjacentHTML('beforeend', '<li data-level="{{ val|round(method='ceil')|int }}"></li>');
     {% endfor %}
   {% endif %}
 </script>

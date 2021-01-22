@@ -1,5 +1,5 @@
 {% macro format_form(form, action, submit_value) %}
-    <form action="{{action}}"" method="POST">
+    <form action="{{action}}" method="POST">
         {{ form.hidden_tag() }}
         {% for field in form if field.widget.input_type != 'hidden' %}
             <p>

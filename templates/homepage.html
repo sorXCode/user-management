@@ -1,6 +1,14 @@
 {% from 'macros.html' import format_form %}
 {% extends "base.html" %}
 
+
+{% block navigation %}
+{% endblock %}
+
 {% block content %}
-    {{ format_form(form=form, action="", submit_value="Sign In") }}
+    <div class="login-page">
+        {{ format_form(form=form, action="", submit_value="Sign In") }}
+    </div>
+{% endblock %}
+{% block sidebar %}
 {% endblock %}

@@ -203,18 +203,13 @@ class Activity(db.Model):
             e.g {1: 23, ...} to indicate 23 visits on the first day of the year
         """
         activities = cls.query.filter_by(user_id=user_id).all()
-        min_count, max_count = 0, 0
         values_dict = {}
         
         for activity in activities:
-            count = activity.count
-
+            count = activity.count 
             values_dict[activity.request_date.timetuple().tm_yday] = count
-            if min_count > count:
-                min_count = count
-            elif max_count < count:
-                max_count = count
+            
         
-        values_dict["min_count"], values_dict["max_count"] = min_count, max_count
+        values_dict["min_count"], values_dict["max_count"] = min(values_dict.values()), max(values_dict.values())
         return values_dict
 
