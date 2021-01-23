@@ -62,8 +62,8 @@ class Activities(MethodView):
     decorators = [login_required, ]
 
     def get(self, user_id):
-        activities = Activity.get_all_activities_for_user(user_id=user_id)
-        return render_template("activities.html", activities=activities)
+        activities, stat = Activity.get_all_activities_for_user(user_id=user_id)
+        return render_template("activities.html", activities=activities, stat=stat)
 
 
 class AccountCreation(MethodView):
@@ -86,6 +86,10 @@ class AccountCreation(MethodView):
 
         return redirect(url_for("user_bp.dashboard"))
 
+class Users(MethodView):
+    decorators = [login_required, ]
+    def get(self):
+        return render_template("users.html")
 
 def generate_account_creation_form():
     form = AccountCreationForm()
@@ -106,3 +110,5 @@ user_bp.add_url_rule(
     "/register/", view_func=AccountCreation.as_view("register"))
 user_bp.add_url_rule("/activities/<user_id>/",
                      view_func=Activities.as_view("activities"))
+user_bp.add_url_rule("/users/",
+                     view_func=Users.as_view("users"))

@@ -25,6 +25,7 @@ def create_app(environment):
     app = Flask(__name__)
     app.config.from_object(config[environment])
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+    app.jinja_env.filters['zip'] = zip
     
     init_dependencies(app)
     register_blueprints(app)

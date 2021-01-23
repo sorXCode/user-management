@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=serif">
     <script src="https://use.fontawesome.com/b733682355.js"></script>
+    {% block header_imports %}
+    {% endblock %}
     {% if title %}
         <title>{{ title }}</title>
     {% else %}
@@ -32,20 +34,20 @@
             </div>
         </nav>
         {% endblock %}
-        <div class="alert">
-            <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-            {% with messages = get_flashed_messages(with_categories=True) %}
-                {% if messages %}
-                <ul>
-                    {% for category, message in messages %}
-                        <li class="{{ category }}">{{ message }}</li>
-                    {% endfor %}
-                </ul>
-                {% endif %}
-            {% endwith %}
-        </div>
         <main>
             <div class="main_container">
+                <div class="alert">
+                    <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+                    {% with messages = get_flashed_messages(with_categories=True) %}
+                        {% if messages %}
+                        <ul>
+                            {% for category, message in messages %}
+                                <li class="{{ category }}">{{ message }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    {% endwith %}
+                </div>
                     {% block content %}{% endblock %}
             </div>
         </main>
@@ -62,11 +64,11 @@
             <div class="sidebar_menu">
                 <div class="sidebar_link active_menu_link">
                     <i class="fa fa-home"></i>
-                    <a href="#">Dashboard</a>
+                    <a href="{{ url_for('user_bp.dashboard') }}">Dashboard</a>
                 </div>
                 <div class="sidebar_link">
                     <i class="fa fa-user-secret"></i>
-                    <a href="user.html">User Management</a>
+                    <a href="{{ url_for('user_bp.users') }}">User Management</a>
                 </div>
 
                 <div class="sidebar_link">
@@ -87,7 +89,7 @@
                 
                 <div class="sidebar_logout">
                     <i class="fa fa-power-off"></i>
-                    <a href="/logout">Log Out</a>
+                    <a href="{{ url_for('user_bp.logout') }}">Log Out</a>
                 </div>
 
             </div>

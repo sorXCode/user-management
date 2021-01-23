@@ -2,7 +2,7 @@ from flask_login import UserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login_manager
 from .exceptions import UserExists, UserNotFound, InvalidPassword, Unauthorized
-from datetime import date
+from datetime import date, timedelta
 from sqlalchemy.orm import backref
 
 
@@ -203,13 +203,44 @@ class Activity(db.Model):
             e.g {1: 23, ...} to indicate 23 visits on the first day of the year
         """
         activities = cls.query.filter_by(user_id=user_id).all()
-        values_dict = {}
+        count_stat = {"min_count": min(map(lambda activity: activity.count, activities)),
+                        "max_count": max(map(lambda activity: activity.count, activities))
+                        }
         
-        for activity in activities:
-            count = activity.count 
-            values_dict[activity.request_date.timetuple().tm_yday] = count
-            
-        
-        values_dict["min_count"], values_dict["max_count"] = min(values_dict.values()), max(values_dict.values())
-        return values_dict
+        record = {}
 
+        for activity in activities:
+            # returns tuple of (year, week_number, day_of_week_number)
+            isoformat = activity.request_date.isocalendar()
+
+            try:
+                record[isoformat[1]][isoformat[2]] = {
+                    "date": activity.request_date.date(), "count": activity.count}
+            except KeyError:
+                record[isoformat[1]] = {
+                    isoformat[2]: {
+                        "date": activity.request_date.date(), "count": activity.count}
+                }
+
+
+        this_year_start = date.fromisoformat(f"{date.today().year}-01-01")
+
+        day_of_year = 1
+        for week in range(1, 54):
+            if not record.get(week, None):
+                record[week] = {}
+
+            for day in range(1, 8):
+                if week==1 and day != this_year_start.isocalendar()[2]:
+                    continue
+
+                if not record[week].get(day):
+                    record[week][day] = {}
+                
+                if not record[week][day]:
+                    record[week][day] = {
+                        "count": 0, "date": this_year_start + timedelta(days=day_of_year-1)}
+
+                day_of_year += 1
+
+        return record, count_stat

@@ -1,0 +1,42 @@
+.create_user{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-right: 120px;
+}
+
+.create_user > i{
+    padding-right: 50px;
+}
+.create_user > p{
+    margin-top: 10px;
+}
+
+.user_list{
+    padding: 20px 10px;
+    margin-right: 50px;
+    margin-top: 20px;
+}
+
+.list{
+    display: grid;
+    grid-template-columns: 6fr 1fr 1fr ;
+    gap: 30px;
+    margin: 20px 20px;
+    border-bottom: 1px solid #cecfd5;
+}
+
+.list_icon_text:hover {
+    background: #eee;
+}
+
+.edit_user > i{
+    padding: 3px;
+    color: #265acc;
+}
+.edit_user:hover {background: #eee;}
+.delete_user:hover {background: #eee;}
+.delete_user > i {
+    padding: 3px;
+    color: #e65061;
+}
