@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="main_title">
+
+    {% if current_user.email == user.email %}
+    <img src="{{ url_for('static', filename='img/undraw_Hello_qnas.svg') }}" alt="hello">
+    <div class="main_greeting">
+        <h1>Hello {{user.email.split("@")[0]|title}}</h1>
+        <p>Welcome to your Dashboard</p>
+    </div>
+    {% else %}
+    <div class="main_greeting">
+        <h1>{{ user.email.split("@")[0]|title }}'s Activity</h1>
+    </div>
+    {% endif %}
+
+</div>
+
+<div class="main_card">
+
+    <div class="card">
+        <i class="fa fa-user-o fa-2x text_lightblue"></i>
+        <div class="card_inner">
+            <p class="text_primary">Number</p>
+            <span class="font_bold text_title">1156</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <i class="fa fa-thumbs-up fa-2x text_green"></i>
+        <div class="card_inner">
+            <p class="text_primary">Number</p>
+            <span class="font_bold text_title">1156</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <i class="fa fa-calendar fa-2x text_red"></i>
+        <div class="card_inner">
+            <p class="text_primary">Number</p>
+            <span class="font_bold text_title">1156</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <i class="fa fa-video-camera fa-2x text_yellow"></i>
+        <div class="card_inner">
+            <p class="text_primary">Number</p>
+            <span class="font_bold text_title">1156</span>
+        </div>
+    </div>
+</div>
+
+
+<div class="chart">
+    <div class="chart_left">
+        <div class="chart_left_title">
+            <div>
+                <h1> Daily Reports</h1>
+                <p>Dublin, Ireland</p>
+            </div>
+            <i class="fa fa-calendar"></i>
+        </div>
+
+        <div class="chart_left_report_container">
+            <ul>
+                <li> <p class="chart_left_report"> Worked on the company's fixed asset report</p> </li>
+                <li> <p class="chart_left_report"> Worked on the company's fixed asset report</p> </li>
+                <li> <p class="chart_left_report"> Worked on the company's fixed asset report</p> </li>
+
+            </ul>
+        </div>
+       
+    </div>
+
+    <div class="chart_right">
+        <div class="chart_right_title">
+            <div>
+                <h1> Status Reports</h1>
+                <p>Dublin, Ireland</p>
+            </div>
+            <i class="fa fa-signal"></i>
+        </div>
+
+        <div class="chart_right_card">
+            <div class="card1">
+                <h2>Sales</h2>
+                <p> $234,000</p>
+            </div>
+
+            <div class="card2">
+                <h2>Income</h2>
+                <p> $34,000</p>
+            </div>
+
+            <div class="card3">
+                <h2>Stats</h2>
+                <p> 80%</p>
+            </div>
+
+            <div class="card4">
+                <h2> Skills</h2>
+                <p> Optimal</p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<div id="activity-graph">
+
+</div>
+{% endblock %}
+
+<script src="{{ url_for('static', filename='/javascript/main.js') }}></script>
+{% block scripts %}
+    $.get("/activities/{{user.id}}/", function(data, status){
+        $("#activity-graph").append(data)
+    })
+{% endblock %}
