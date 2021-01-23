@@ -67,7 +67,7 @@ class User(UserMixin, db.Model):
     updated_on = db.Column(db.DateTime, server_default=db.func.now(
     ), server_onupdate=db.func.now(), nullable=True)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
-    upline = db.relationship('Relation', backref='upline',
+    upline = db.relationship('Relation', backref='identity',
                              foreign_keys="[Relation.child_id]", uselist=False, lazy=True)
     downlines = db.relationship(
         'Relation', backref='downline', foreign_keys="[Relation.parent_id]", lazy='dynamic')
@@ -203,8 +203,8 @@ class Activity(db.Model):
             e.g {1: 23, ...} to indicate 23 visits on the first day of the year
         """
         activities = cls.query.filter_by(user_id=user_id).all()
-        count_stat = {"min_count": min(map(lambda activity: activity.count, activities)),
-                        "max_count": max(map(lambda activity: activity.count, activities))
+        count_stat = {"min_count": min(map(lambda activity: activity.count, activities)) if activities else 0,
+                        "max_count": max(map(lambda activity: activity.count, activities)) if activities else 0
                         }
         
         record = {}

@@ -5,6 +5,7 @@ from flask_login import current_user, login_required, login_user, logout_user
 
 from .forms import LoginForm, AccountCreationForm
 from .models import Activity, User, Role
+from .utils import access_level
 
 user_bp = Blueprint("user_bp", __name__)
 
@@ -53,9 +54,13 @@ class LogoutUser(View):
 class Dashboard(MethodView):
     decorators = [login_required, ]
 
-    def get(self):
-        form = generate_account_creation_form()
-        return render_template("dashboard.html", form=form)
+    @access_level(levels=["owner", "creator", "super_admin"])
+    def get(self, user_email=None):
+        if user_email:
+            user = User.get_user(email=user_email)
+        else:
+            user = current_user
+        return render_template("dashboard.html", user=user)
 
 
 class Activities(MethodView):
@@ -88,8 +93,12 @@ class AccountCreation(MethodView):
 
 class Users(MethodView):
     decorators = [login_required, ]
+
+
     def get(self):
-        return render_template("users.html")
+        form = generate_account_creation_form()
+        registered_user = [user_relation.identity for user_relation in current_user.downlines.all()]
+        return render_template("users.html", users=registered_user, form=form)
 
 def generate_account_creation_form():
     form = AccountCreationForm()
@@ -105,6 +114,7 @@ def generate_account_creation_form():
 
 user_bp.add_url_rule("/", view_func=Homepage.as_view("homepage"))
 user_bp.add_url_rule("/dashboard/", view_func=Dashboard.as_view("dashboard"))
+user_bp.add_url_rule("/users/<user_email>", view_func=Dashboard.as_view("user_dashboard"))
 user_bp.add_url_rule("/logout/", view_func=LogoutUser.as_view("logout"))
 user_bp.add_url_rule(
     "/register/", view_func=AccountCreation.as_view("register"))
