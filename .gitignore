@@ -1,6 +1,4 @@
 venv
 .vscode
-*.py[cab]
+.py[cab]
 .env
-*.sqlite
-migrations/*
