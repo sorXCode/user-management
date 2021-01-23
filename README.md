@@ -1,15 +1,30 @@
-# User Management
+# FLASK USER MANAGEMENT APP
 
-## Create Virtual Environment
+## Create and Activate Virtual Environment
 
-`python3 -m venv venv`
-
-## Activate Virtual Envrionment
-
-`source venv/bin/activate`
+```shell
+python3 -m venv venv
+source venv/bin/activate
+```
 
 ## Install dependencies
 
-`pip install -r requirements.txt`
+```shell
+pip install -r requirements.txt
+```
 
-## Set Environment Variable
+NOTE: To run test/website, create a local .env file with the following values
+`SECRET_KEY={ANY-STRING-HARD-QUESS}`
+
+## To run tests
+
+```shell
+pytest
+```
+
+## To run website
+
+```shell
+export FLASK_APP=app
+flask run
+```
