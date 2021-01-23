@@ -62,7 +62,7 @@
             {% for y, day in ns.rect_y|zip(range(1,8)) %}
               {% set ns_inner = namespace(day=activities[week].get(day), color_level="0") %}
               {% if ns_inner.day %}
-              {% set ns_inner.color_level = ( ns_inner.day["count"] / ns.max_count)*3 |round(method='ceil') %}
+              {% set ns_inner.color_level = ( ns_inner.day["count"] / (ns.max_count or 1))*3 |round(method='ceil') %}
               <rect class="day" width="12" height="12" x="{{ ns.rect_x }}" y="{{ y }}" data-level="{{ ns_inner.color_level|int }}" data-count="{{ ns_inner.day['count'] }}" data-date="{{ ns_inner.day['date'] }}" />
               {% else %}
               <rect class="day" width="12" height="12" x="{{ ns.rect_x }}" y="{{ y }}" data-level="0" data-count="0" data-date="-" />

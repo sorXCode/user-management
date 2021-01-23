@@ -36,21 +36,21 @@
         {% endblock %}
         <main>
             <div class="main_container">
+                {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
                 <div class="alert">
                     <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-                    {% with messages = get_flashed_messages(with_categories=True) %}
-                        {% if messages %}
                         <ul>
                             {% for category, message in messages %}
                                 <li class="{{ category }}">{{ message }}</li>
                             {% endfor %}
                         </ul>
-                        {% endif %}
+                    </div>
+                    {% endif %}
                     {% endwith %}
-                </div>
                     {% block content %}{% endblock %}
-            </div>
-        </main>
+                </div>
+            </main>
         {% block sidebar %}
         <div id="sidebar">
             <div class="sidebar_title">
@@ -66,10 +66,12 @@
                     <i class="fa fa-home"></i>
                     <a href="{{ url_for('user_bp.dashboard') }}">Dashboard</a>
                 </div>
+                {% if current_user.is_admin() or current_user.is_super_admin() %}
                 <div class="sidebar_link">
                     <i class="fa fa-user-secret"></i>
                     <a href="{{ url_for('user_bp.users') }}">User Management</a>
                 </div>
+                {% endif %}
 
                 <div class="sidebar_link">
                     <i class="fa fa-users"></i>
