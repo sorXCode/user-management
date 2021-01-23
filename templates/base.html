@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <!-- jQuery Modal -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=serif">
+    <script src="https://use.fontawesome.com/b733682355.js"></script>
+    {% block header_imports %}
+    {% endblock %}
+    {% if title %}
+        <title>{{ title }}</title>
+    {% else %}
+        <title>User Management</title>
+    {% endif %}
+</head>
+
+<body>
+    <div class="container">
+        {% block navigation %}
+        <nav class="navbar">
+            <div class="nav_icon" onclick="toggleSidebar()">
+                <i class="fa fa-bars"></i>
+            </div>
+            <div class="navbar_right">
+                <a href="#">
+                    <img width="30" src="{{ url_for('static', filename='img/undraw_male_avatar_323b.svg') }}" alt="profile">
+                </a>  
+            </div>
+        </nav>
+        {% endblock %}
+        <main>
+            <div class="main_container">
+                <div class="alert">
+                    <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+                    {% with messages = get_flashed_messages(with_categories=True) %}
+                        {% if messages %}
+                        <ul>
+                            {% for category, message in messages %}
+                                <li class="{{ category }}">{{ message }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+                    {% block content %}{% endblock %}
+            </div>
+        </main>
+        {% block sidebar %}
+        <div id="sidebar">
+            <div class="sidebar_title">
+                <div class="sidebar_img">
+                    <img src="{{ url_for('static', filename='img/undraw_To_the_stars_qhyy.svg') }}" alt="logo">
+                    <h1>Company XYZ</h1>
+                </div>
+                <i class="fa fa-times" id="sidebarIcon" onclick="closeSidebar()"></i>
+            </div>
+
+            <div class="sidebar_menu">
+                <div class="sidebar_link active_menu_link">
+                    <i class="fa fa-home"></i>
+                    <a href="{{ url_for('user_bp.dashboard') }}">Dashboard</a>
+                </div>
+                <div class="sidebar_link">
+                    <i class="fa fa-user-secret"></i>
+                    <a href="{{ url_for('user_bp.users') }}">User Management</a>
+                </div>
+
+                <div class="sidebar_link">
+                    <i class="fa fa-users"></i>
+                    <a href="#">Groups</a>
+                </div>
+
+
+                <div class="sidebar_link">
+                    <i class="fa fa-comment"></i>
+                    <a href="#">Messages</a>
+                </div>
+
+                <div class="sidebar_link">
+                    <i class="fa fa-handshake-o"></i>
+                    <a href="#">Teams</a>
+                </div>
+                
+                <div class="sidebar_logout">
+                    <i class="fa fa-power-off"></i>
+                    <a href="{{ url_for('user_bp.logout') }}">Log Out</a>
+                </div>
+
+            </div>
+        </div> 
+        {% endblock %}
+    </div>
+    <script>
+        {% block scripts %}{% endblock %}
+    </script>
+    </div>
+</body>
+</html>
