@@ -12,7 +12,11 @@ class TestLogin(BaseTestCase):
         db.drop_all()
         db.create_all()
         # create default user for tests
-        User.create_user(**self.user_data)
+        super_admin = {"email": "root@root.com", "is_super_admin": True}
+        super_admin = User(**super_admin)
+        super_admin.password = "root"
+        db.session.add(super_admin)
+        db.session.commit()
         
 
     def test_load_homepage(self):
@@ -35,7 +39,7 @@ class TestLogin(BaseTestCase):
             self.assertEqual(response.status_code, 200)
 
             # check relative "LOGOUT" link in response
-            logout_link = url_for("user_bp.logout").split("/")[-1]
+            logout_link = url_for("user_bp.logout")
             self.assertIn(logout_link, response.data.decode('utf-8'))
 
             self.assertEqual(self.user_data["email"], current_user.email)
