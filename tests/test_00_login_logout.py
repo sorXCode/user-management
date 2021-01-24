@@ -1,23 +1,11 @@
 from . import BaseTestCase, db
-from user.models import User
+from user.models import User, Role
 from flask import url_for
 from flask_login import current_user
+from .utils import logout, login, register
 
 class TestLogin(BaseTestCase):
 
-    def setUp(self):
-        super().setUp()
-        # Dropping and creating tables on signup test\
-        # to ensure retest success
-        db.drop_all()
-        db.create_all()
-        # create default user for tests
-        super_admin = {"email": "root@root.com", "is_super_admin": True}
-        super_admin = User(**super_admin)
-        super_admin.password = "root"
-        db.session.add(super_admin)
-        db.session.commit()
-        
 
     def test_load_homepage(self):
         response = self.test_client.get(
@@ -34,7 +22,7 @@ class TestLogin(BaseTestCase):
         # keeping request context open to check user properties after login
         with self.test_client as test_client:
             
-            response = test_client.post(url_for("user_bp.homepage"), data=self.user_data, follow_redirects=True)
+            response = login(test_client, self.user_data)
             # assert template loaded successfully
             self.assertEqual(response.status_code, 200)
 
@@ -45,6 +33,6 @@ class TestLogin(BaseTestCase):
             self.assertEqual(self.user_data["email"], current_user.email)
 
             # logout user
-            response = test_client.get(logout_link, follow_redirects=True)
+            response = logout(test_client)
             self.assertEqual(response.status_code, 200)
             self.assertEqual(False, current_user.is_authenticated)
