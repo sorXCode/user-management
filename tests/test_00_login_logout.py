@@ -5,7 +5,7 @@ from flask_login import current_user
 from .utils import logout, login, register
 
 class TestLogin(BaseTestCase):
-
+    
 
     def test_load_homepage(self):
         response = self.test_client.get(
