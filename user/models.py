@@ -161,6 +161,9 @@ class User(UserMixin, db.Model):
 
     def is_super_admin(self):
         return self.can(Permission.SUPER_ADMIN)
+    
+    def is_user(self):
+        return self.can(Permission.USER)
 
     def __repr__(self):
         return f"<User {self.email}"

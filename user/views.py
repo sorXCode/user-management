@@ -103,10 +103,10 @@ class Users(MethodView):
 def generate_account_creation_form():
     form = AccountCreationForm()
 
-    if current_user.is_super_admin:
+    if current_user.is_super_admin():
         form.user_type.choices = [
             ("super-admin", "super-admin"), ("admin", "admin"), ]
-    elif current_user.is_admin:
+    elif current_user.is_admin():
         form.user_type.choices = [("admin", "admin"), ("user", "user")]
 
     return form
