@@ -24,7 +24,19 @@ pytest
 
 ## To run website
 
+### Run application
+
 ```shell
 export FLASK_APP=app
 flask run
+```
+
+### **ps: Perform databases migration**
+
+To run application for the first time, perform database migration using the commands below at the root folder
+
+```shell
+flask db init
+flask db migrate
+flask db upgrade
 ```
