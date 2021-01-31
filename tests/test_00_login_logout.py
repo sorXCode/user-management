@@ -1,5 +1,5 @@
 from . import BaseTestCase, db
-from user.models import User, Role
+from user.models import User, Role, UserRole
 from flask import url_for
 from flask_login import current_user
 from .utils import logout, login, register
@@ -20,7 +20,7 @@ class TestLogin(BaseTestCase):
             user = {"email": self.user_data[role]["email"]}
             user = User(**user)
             user.password = self.user_data[role]["password"]
-            user.role = Role.query.filter_by(name=role).first()
+            user.user_roles.append(UserRole(role=eval(f"Role.get_{role}_role()"), user=user))
             db.session.add(user)
 
         db.session.commit()

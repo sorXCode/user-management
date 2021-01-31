@@ -14,7 +14,7 @@ user_bp = Blueprint("user_bp", __name__)
 def create_roles_and_one_super_admin():
     if Role.insert_roles():
         print(f"created roles at app start")
-    if User.first_user():
+    if User.create_first_user():
         print(f"created super_admin at app start")
 
 

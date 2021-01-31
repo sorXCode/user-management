@@ -1,10 +1,11 @@
-from flask_login import UserMixin, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
-from app import db, login_manager
-from .exceptions import UserExists, UserNotFound, InvalidPassword, Unauthorized
 from datetime import date, timedelta
-from sqlalchemy.orm import backref
 
+from app import db, login_manager
+from flask_login import UserMixin, current_user
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from .exceptions import InvalidPassword, Unauthorized, UserExists, UserNotFound
+from functools import lru_cache
 
 class Permission:
     USER = 0
@@ -14,29 +15,42 @@ class Permission:
 
 class Role(db.Model):
     __tablename__ = 'roles'
+    roles = {"user":"user", "admin":"admin", "super_admin":"super_admin",}
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(60), unique=True, nullable=False)
-    permissions = db.Column(db.Integer)
-    users = db.relationship('User', backref='role', lazy='dynamic')
-
+    user_roles = db.relationship("UserRole", foreign_keys="[UserRole.role_id]", backref="role", lazy="dynamic")
+    
     @classmethod
     def insert_roles(cls):
-        roles = {
-            "user": Permission.USER,
-            "admin": Permission.ADMIN,
-            "super_admin": Permission.SUPER_ADMIN,
-        }
         created_role = False
-        for role in roles:
+        for role in cls.roles:
             role_object = cls.query.filter_by(name=role).first()
             if role_object:
                 continue
-            role_object = cls(name=role, permissions=roles[role])
+            role_object = cls(name=role)
             db.session.add(role_object)
             created_role = True
         db.session.commit()
         return created_role
+
+    @classmethod
+    @lru_cache
+    def get_user_role(cls):
+        return cls.query.filter_by(name=cls.roles["user"]).first()
+
+    @classmethod
+    @lru_cache
+    def get_admin_role(cls):
+        return cls.query.filter_by(name=cls.roles["admin"]).first()
+    
+    @classmethod
+    @lru_cache
+    def get_super_admin_role(cls):
+        return cls.query.filter_by(name=cls.roles["super_admin"]).first()
+    
+    def __eq__(self, role):
+        return isinstance(role, Role) and self.name == role.name
 
 
 class Relation(db.Model):
@@ -66,21 +80,22 @@ class User(UserMixin, db.Model):
         db.TIMESTAMP, server_default=db.func.current_timestamp(), nullable=False)
     updated_on = db.Column(db.DateTime, server_default=db.func.now(
     ), server_onupdate=db.func.now(), nullable=True)
-    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     upline = db.relationship('Relation', backref='identity',
                              foreign_keys="[Relation.child_id]", uselist=False, lazy=True)
     downlines = db.relationship(
         'Relation', backref='downline', foreign_keys="[Relation.parent_id]", lazy='dynamic')
+    user_roles = db.relationship("UserRole", backref="user",
+                            foreign_keys="[UserRole.user_id]", lazy=True)
 
     @classmethod
-    def first_user(cls):
+    def create_first_user(cls):
         if cls.query.filter_by().first():
             return None
 
-        first_user_role = "super_admin"
         user = cls(email="root@root.com")
         user.password = "root"
-        user.role = Role.query.filter_by(name=first_user_role).first()
+        user_role = UserRole(role=Role.get_super_admin_role(), user=user)
+        user.user_roles.append(user_role)
         db.session.commit()
         return True
 
@@ -114,12 +129,13 @@ class User(UserMixin, db.Model):
 
         # give created user appropriate role
         if is_super_admin:
-            user.role = Role.query.filter_by(name="super_admin").first()
+            user_role = UserRole(role=Role.get_super_admin_role(), user=user)
         elif is_admin:
-            user.role = Role.query.filter_by(name="admin").first()
+            user_role = UserRole(role=Role.get_admin_role(), user=user)
         else:
-            user.role = Role.query.filter_by(name="user").first()
+            user_role = UserRole(role=Role.get_user_role(), user=user)
 
+        user.user_roles.append(user_role)
         # add and commit new user to get an id which would be used to link the user to its creator
         db.session.add(user)
         db.session.commit()
@@ -152,18 +168,25 @@ class User(UserMixin, db.Model):
 
         return user
 
-    def can(self, permissions):
-        return self.role is not None and \
-            (self.role.permissions & permissions) == permissions
+    def can(self, role):
+        # need to add role to session since its cached by the LRU
+        db.session.add(role)
+        result = self.user_roles is not None and \
+            role in [user_role.role for user_role in self.user_roles]
+        # we need to remove role from session
+        db.session.remove()
+
+        return result
+
 
     def is_admin(self):
-        return self.can(Permission.ADMIN)
+        return self.can(Role.get_admin_role())
 
     def is_super_admin(self):
-        return self.can(Permission.SUPER_ADMIN)
-    
+        return self.can(Role.get_super_admin_role())
+
     def is_user(self):
-        return self.can(Permission.USER)
+        return self.can(Role.get_user_role())
 
     def __repr__(self):
         return f"<User {self.email}"
@@ -172,6 +195,27 @@ class User(UserMixin, db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+class UserRole(db.Model):
+    __tablename__ = "user_roles"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    role_id = db.Column(db.Integer, db.ForeignKey("roles.id"))
+
+
+class Permission(db.Model):
+    __tablename__ = "permissions"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, unique=True)
+    codname = db.Column(db.String, unique=True)
+
+
+class RolePermission(db.Model):
+    __tablename__ = "role_permisssions"
+    id = db.Column(db.Integer, primary_key=True)
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
+    permission_id = db.Column(db.Integer, db.ForeignKey('permissions.id'))
 
 
 class Activity(db.Model):
@@ -197,19 +241,23 @@ class Activity(db.Model):
 
     @classmethod
     def get_user_latest_activity_for_day(cls, user_id):
-        return cls.query.filter_by(user_id=user_id, request_date=f"{date.today()} 00:00:00.000000").first()
+        return cls.query.filter_by(user_id=user_id,
+                                   request_date=f"{date.today()} 00:00:00.000000").first()
 
     @classmethod
     def get_all_activities_for_user(cls, user_id):
         """
-            returns dict of {day_of_year: count, ..., min:x, max:y} where min=lowest count, max=highest count
+            returns dict of {day_of_year: count, ..., min:x, max:y}
+                    where min=lowest count, max=highest count
             e.g {1: 23, ...} to indicate 23 visits on the first day of the year
         """
         activities = cls.query.filter_by(user_id=user_id).all()
-        count_stat = {"min_count": min(map(lambda activity: activity.count, activities)) if activities else 0,
-                        "max_count": max(map(lambda activity: activity.count, activities)) if activities else 0
-                        }
-        
+        count_stat = {"min_count": min(map(lambda activity: activity.count, activities))
+                      if activities else 0,
+                      "max_count": max(map(lambda activity: activity.count, activities))
+                      if activities else 0
+                      }
+
         record = {}
 
         for activity in activities:
@@ -225,7 +273,6 @@ class Activity(db.Model):
                         "date": activity.request_date.date(), "count": activity.count}
                 }
 
-
         this_year_start = date.fromisoformat(f"{date.today().year}-01-01")
 
         day_of_year = 1
@@ -234,12 +281,12 @@ class Activity(db.Model):
                 record[week] = {}
 
             for day in range(1, 8):
-                if week==1 and day != this_year_start.isocalendar()[2]:
+                if week == 1 and day != this_year_start.isocalendar()[2]:
                     continue
 
                 if not record[week].get(day):
                     record[week][day] = {}
-                
+
                 if not record[week][day]:
                     record[week][day] = {
                         "count": 0, "date": this_year_start + timedelta(days=day_of_year-1)}
