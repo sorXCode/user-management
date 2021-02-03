@@ -4,7 +4,7 @@ from flask.views import MethodView, View
 from flask_login import current_user, login_required, login_user, logout_user
 
 from .forms import LoginForm, AccountCreationForm
-from .models import Activity, User, Role
+from .models import Activity, User, Role, Permission
 from .utils import access_level
 
 user_bp = Blueprint("user_bp", __name__)
@@ -14,6 +14,8 @@ user_bp = Blueprint("user_bp", __name__)
 def create_roles_and_one_super_admin():
     if Role.insert_roles():
         print(f"created roles at app start")
+    if Permission.insert_permissions():
+        print("inserted permissions")
     if User.create_first_user():
         print(f"created super_admin at app start")
 

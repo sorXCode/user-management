@@ -1,16 +1,58 @@
 from datetime import date, timedelta
 
 from app import db, login_manager
-from flask_login import UserMixin, current_user
+from flask_login import UserMixin, current_user, login_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .exceptions import InvalidPassword, Unauthorized, UserExists, UserNotFound
 from functools import lru_cache
+from team.models import Team, UserTeam
+class Permission(db.Model):
+    permissions = (#user permissions
+                    "can_create_super_admin",
+                    "can_create_admin",
+                    "can_create_user",
+                    "can_delete_admin",
+                    "can_delete_super_admin",
+                    "can_delete_user",
+                    "can_edit_super_admin",
+                    "can_edit_admin",
+                    "can_edit_user",
+                    "can_view_users",
+                    # team permissions
+                    "can_create_team",
+                    "can_delete_team",
+                    "can_edit_team",
+                    "can_deactivate_team",
+                    "can_view_team_members",
+                    # team access permissions
+                    "can_request_to_join_team",
+                    "can_approve_join_request",
+                    "can_reject_join_request",
+                    "can_remove_user_from_team",
+                    "can_admit_user_to_team",
+                    # user access permissions
+                    "can_block_users",
+                    "can_block_admin",
+                    "can_view_users_activity",
+    )
 
-class Permission:
-    USER = 0
-    ADMIN = 1
-    SUPER_ADMIN = 10
+    __tablename__ = "permissions"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, unique=True)
+    codname = db.Column(db.String, unique=True)
+
+    @classmethod
+    def insert_permissions(cls):
+        if cls.query.filter_by().first():
+            return None
+
+        for perm in cls.permissions:
+            permission = cls(name=perm.replace("_", " "), codname=perm)
+            db.session.add(permission)
+        
+        db.session.commit()
+        return True
 
 
 class Role(db.Model):
@@ -86,17 +128,23 @@ class User(UserMixin, db.Model):
         'Relation', backref='downline', foreign_keys="[Relation.parent_id]", lazy='dynamic')
     user_roles = db.relationship("UserRole", backref="user",
                             foreign_keys="[UserRole.user_id]", lazy=True)
+    teams = db.relationship("UserTeam", backref="team_user", foreign_keys="[UserTeam.user_id]", lazy="dynamic")
+    requests_accepted = db.relationship("UserTeam", backref="user_", foreign_keys="[UserTeam.user_id]", lazy="dynamic")
 
     @classmethod
-    def create_first_user(cls):
+    def create_first_user(cls, email="root@root.com", password="root"):
         if cls.query.filter_by().first():
             return None
 
-        user = cls(email="root@root.com")
-        user.password = "root"
+        user = cls(email=email)
+        user.password = password
         user_role = UserRole(role=Role.get_super_admin_role(), user=user)
         user.user_roles.append(user_role)
+
+        db.session.add(user)
         db.session.commit()
+        
+        Team.create_team(name="Team0", description="Default team", creator_id=user.id)
         return True
 
     @property
@@ -204,12 +252,6 @@ class UserRole(db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey("roles.id"))
 
 
-class Permission(db.Model):
-    __tablename__ = "permissions"
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, unique=True)
-    codname = db.Column(db.String, unique=True)
-
 
 class RolePermission(db.Model):
     __tablename__ = "role_permisssions"
@@ -294,3 +336,4 @@ class Activity(db.Model):
                 day_of_year += 1
 
         return record, count_stat
+
