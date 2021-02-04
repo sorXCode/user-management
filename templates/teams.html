@@ -1,0 +1,41 @@
+{% from 'macros.html' import format_form %}
+{% extends "base.html" %}
+
+{% block header_imports %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+{% endblock %}
+
+{% block content %}
+
+{% if current_user.is_admin or current_user.is_super_admin %}
+<div id="registerModal" class="modal">
+    {{ format_form(form=form, action=url_for('team_bp.create_team'), submit_value="Create Team") }}
+</div>
+<div class="create_user text_lightblue">
+    <i class="fa fa-plus-square fa-2x"></i>
+    <p> <a href="#registerModal" rel="modal:open">Create New Team</a></p>
+</div>
+{% endif %}
+
+<div class="user_list">
+    <div class="list">
+        {% if teams %}
+            {% for team in teams %}
+            <div class="list_icon_text">
+                <i class="fa fa-user-o text_lightblue"></i>
+                <p class="text_primary"><a href="/teams/{{team.name}}">{{ team.name }}</a></p>
+            </div>
+            
+            <div class="edit_user">
+                <span class="font_bold text_title"><a href="#">Edit</a></span>
+                <i class="fa fa-pencil"></i>
+            </div>
+            <div class ="delete_user">
+                <span class="font_bold text_title"><a href="#">Delete</a></span>
+                <i class="fa fa-trash"></i>
+            </div>    
+        {% endfor %}
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -107,6 +107,10 @@ class Relation(db.Model):
         db.session.add(link)
         db.session.commit()
         return link
+    
+    @classmethod
+    def get_all_downlines_for_user_id(cls, user_id):
+        return [User.get_user_by_id(relation.child_id) for relation in cls.query.filter_by(parent_id=user_id).all()]
 
     def __repr__(self):
         return f"{self.parent.email} -> {self.child.email}"
@@ -123,13 +127,11 @@ class User(UserMixin, db.Model):
     updated_on = db.Column(db.DateTime, server_default=db.func.now(
     ), server_onupdate=db.func.now(), nullable=True)
     upline = db.relationship('Relation', backref='identity',
-                             foreign_keys="[Relation.child_id]", uselist=False, lazy=True)
-    downlines = db.relationship(
-        'Relation', backref='downline', foreign_keys="[Relation.parent_id]", lazy='dynamic')
+                             foreign_keys="[Relation.child_id]", uselist=False, lazy=False)
     user_roles = db.relationship("UserRole", backref="user",
                             foreign_keys="[UserRole.user_id]", lazy=True)
-    teams = db.relationship("UserTeam", backref="team_user", foreign_keys="[UserTeam.user_id]", lazy="dynamic")
-    requests_accepted = db.relationship("UserTeam", backref="user_", foreign_keys="[UserTeam.user_id]", lazy="dynamic")
+    teams = db.relationship("UserTeam", backref="team_member", foreign_keys="[UserTeam.user_id]", lazy="dynamic")
+    requests_accepted = db.relationship("UserTeam", backref="admitter", foreign_keys="[UserTeam.admitted_by]", lazy="dynamic")
 
     @classmethod
     def create_first_user(cls, email="root@root.com", password="root"):
@@ -143,7 +145,7 @@ class User(UserMixin, db.Model):
 
         db.session.add(user)
         db.session.commit()
-        
+
         Team.create_team(name="Team0", description="Default team", creator_id=user.id)
         return True
 
@@ -239,10 +241,19 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f"<User {self.email}"
 
+    def get_all_teams(self):
+        return (user_team.team for user_team in self.teams.all())
+    
+    @classmethod
+    def get_user_by_id(cls, user_id):
+        return cls.query.get(int(user_id))
+    
+    def get_downlines(self):
+        return Relation.get_all_downlines_for_user_id(user_id=self.id)
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return User.get_user_by_id(user_id=user_id)
 
 
 class UserRole(db.Model):

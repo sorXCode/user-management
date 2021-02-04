@@ -72,13 +72,6 @@
                     <a href="{{ url_for('user_bp.users') }}">User Management</a>
                 </div>
                 {% endif %}
-
-                <div class="sidebar_link">
-                    <i class="fa fa-users"></i>
-                    <a href="#">Groups</a>
-                </div>
-
-
                 <div class="sidebar_link">
                     <i class="fa fa-comment"></i>
                     <a href="#">Messages</a>
@@ -86,7 +79,7 @@
 
                 <div class="sidebar_link">
                     <i class="fa fa-handshake-o"></i>
-                    <a href="#">Teams</a>
+                    <a href="{{ url_for('team_bp.teams') }}">Teams</a>
                 </div>
                 
                 <div class="sidebar_logout">

@@ -84,7 +84,7 @@ class AccountCreation(MethodView):
                                   "admin": User.create_admin,
                                   "user": User.create_user}
                 create_account[form.user_type.data](
-                    email=form.email.data, password=form.password.data)
+                    email=form.email.data.strip(), password=form.password.data)
                 flash(f"{form.email.data} account created")
             else:
                 flash("cannot create account")
@@ -99,7 +99,7 @@ class Users(MethodView):
 
     def get(self):
         form = generate_account_creation_form()
-        registered_user = [user_relation.identity for user_relation in current_user.downlines.all()]
+        registered_user = current_user.get_downlines()
         return render_template("users.html", users=registered_user, form=form)
 
 def generate_account_creation_form():

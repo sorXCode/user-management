@@ -1,0 +1,35 @@
+{% from 'macros.html' import format_form %}
+{% extends "base.html" %}
+
+{% block header_imports %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+{% endblock %}
+
+{% block content %}
+
+{% if team %}
+<h2>{{ team.name }}</h2>
+{% endif %}
+
+<div class="user_list">
+    <div class="list">
+        {% if users %}
+            {% for user in users %}
+            <div class="list_icon_text">
+                <i class="fa fa-user-o text_lightblue"></i>
+                <p class="text_primary">{{ user.email }}</a></p>
+            </div>
+            
+            <div class="edit_user">
+                <span class="font_bold text_title"><a href="#">Edit</a></span>
+                <i class="fa fa-pencil"></i>
+            </div>
+            <div class ="delete_user">
+                <span class="font_bold text_title"><a href="#">Delete</a></span>
+                <i class="fa fa-trash"></i>
+            </div>    
+        {% endfor %}
+    {% endif %}
+
+</div>
+{% endblock %}
