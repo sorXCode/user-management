@@ -11,11 +11,11 @@
     <div id="registerModal" class="modal">
         {{ format_form(form=form, action="/register/", submit_value="Create Account") }}
     </div>
+    <div class="create_user text_lightblue">
+        <i class="fa fa-plus-square fa-2x"></i>
+        <p> <a href="#registerModal" rel="modal:open">Create New User</a></p>
+    </div>
 {% endif %}
-<div class="create_user text_lightblue">
-    <i class="fa fa-plus-square fa-2x"></i>
-    <p> <a href="#registerModal" rel="modal:open">Create New User</a></p>
-</div>
 
 <div class="user_list">
     <div class="list">

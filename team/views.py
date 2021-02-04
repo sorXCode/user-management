@@ -44,8 +44,28 @@ class TeamView(MethodView):
     def get(self, team_name=None):
         if team_name:
             team = Team.get_team_by_name(name=team_name)
+            
+            form = TeamCreationForm()
+            form.name.data = team.name
+            form.description.data = team.description
+
             users_in_team = [user_team.team_member for user_team in team.user_team.all()]
-            return render_template("team.html", users=users_in_team, team=team)
+            return render_template("team.html", users=users_in_team, team=team, form=form)
+        return redirect(url_for("team_bp.teams"))
+    
+    def post(self, team_name):
+        form = TeamCreationForm()
+
+        if form.validate_on_submit():
+            team = Team.get_team_by_name(name=team_name)
+            
+            team.name = form.name.data
+            team.description = form.description.data
+            team.save()
+
+            flash("Team updated", 'success')
+            return redirect(url_for("team_bp.team_view", team_name=team.name))
+        flash('Team update failed', 'failed')
         return redirect(url_for("team_bp.teams"))
 
 class TeamSearch(MethodView):
@@ -59,7 +79,9 @@ class TeamSearch(MethodView):
             team = Team.search_by_part_name(form.name.data)
         return render_template("teamsearch_result.html", team=team)
 
+
+
 team_bp.add_url_rule("/teams", view_func=TeamsList.as_view("teams"))
-team_bp.add_url_rule("/teams/search", view_func=TeamSearch.as_view("create_team"))
+team_bp.add_url_rule("/teams/search", view_func=TeamSearch.as_view("search_team"))
 team_bp.add_url_rule("/teams/<team_name>", view_func=TeamView.as_view("team_view"))
 team_bp.add_url_rule("/teams", view_func=TeamCreation.as_view("create_team"))

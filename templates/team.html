@@ -7,6 +7,17 @@
 
 {% block content %}
 
+
+{% if current_user.is_admin or current_user.is_super_admin %}
+    <div id="editModal" class="modal">
+        {{ format_form(form=form, action=url_for("team_bp.team_view", team_name=team.name), submit_value="Update Team") }}
+    </div>
+    <div class="create_user text_lightblue">
+        <i class="fa fa-plus-square fa-2x"></i>
+        <p> <a href="#editModal" rel="modal:open">Edit team</a></p>
+    </div>
+{% endif %}
+
 {% if team %}
 <h2>{{ team.name }}</h2>
 {% endif %}
@@ -21,11 +32,9 @@
             </div>
             
             <div class="edit_user">
-                <span class="font_bold text_title"><a href="#">Edit</a></span>
-                <i class="fa fa-pencil"></i>
             </div>
             <div class ="delete_user">
-                <span class="font_bold text_title"><a href="#">Delete</a></span>
+                <span class="font_bold text_title"><a href="#">remove</a></span>
                 <i class="fa fa-trash"></i>
             </div>    
         {% endfor %}
