@@ -22,8 +22,7 @@
         {% if users %}
         {% for user in users %}
         <div class="list_icon_text">
-            <i class="fa fa-user-o text_lightblue"></i>
-            <p class="text_primary"><a href="/users/{{user.email}}">{{ user.email }}</a></p>
+            <p class="text_primary fa fa-user-o"><a href="/users/{{user.email}}">{{ user.email }}</a></p>
         </div>
         
         <div class="edit_user">
@@ -33,6 +32,9 @@
         <div class ="delete_user">
             <span class="font_bold text_title"><a href="#">Delete</a></span>
             <i class="fa fa-trash"></i>
+        </div>
+        <div>
+            <span class="font_bold text_title"><a href="{{url_for('user_bp.toggle_block_status', user_email=user.email)}}">{{ 'Unblock' if user.is_blocked else 'Block'}}</a></span>
         </div>    
     {% endfor %}
     {% endif %}

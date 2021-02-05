@@ -126,6 +126,7 @@ class User(UserMixin, db.Model):
         db.TIMESTAMP, server_default=db.func.current_timestamp(), nullable=False)
     updated_on = db.Column(db.DateTime, server_default=db.func.now(
     ), server_onupdate=db.func.now(), nullable=True)
+    is_blocked = db.Column(db.Boolean(), default=False)
     upline = db.relationship('Relation', backref='identity',
                              foreign_keys="[Relation.child_id]", uselist=False, lazy=False, cascade="all, delete")
     user_roles = db.relationship("UserRole", backref="user",
@@ -246,8 +247,8 @@ class User(UserMixin, db.Model):
         return set(user_team.team for user_team in self.teams.all())
     
     @classmethod
-    def get_user_by_id(cls, user_id):
-        return cls.query.get(int(user_id))
+    def get_user_by_id(cls, user_id, **kwargs):
+        return cls.query.filter_by(id=int(user_id), **kwargs).first()
     
     def get_downlines(self):
         return Relation.get_all_downlines_for_user_id(user_id=self.id)
@@ -255,9 +256,18 @@ class User(UserMixin, db.Model):
     def get_pending_join_requests(self):
         return list(set(join_request.team for join_request in self.pending_requests.all()))
 
+    def toggle_block_status(self):
+        self.is_blocked = not self.is_blocked
+        self.save()
+    
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+
 @login_manager.user_loader
 def load_user(user_id):
-    return User.get_user_by_id(user_id=user_id)
+    return User.get_user_by_id(user_id=user_id, is_blocked=False)
 
 
 class UserRole(db.Model):
