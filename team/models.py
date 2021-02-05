@@ -17,7 +17,7 @@ class Team(db.Model):
     is_active = db.Column(
         db.Boolean(), default=True
     )
-    user_team = db.relationship("UserTeam", backref="team", lazy='dynamic')
+    user_team = db.relationship("UserTeam", backref="team", lazy='dynamic', cascade="all, delete",)
 
     @classmethod
     def get_team_by_name(cls, name):
@@ -56,6 +56,10 @@ class Team(db.Model):
     def toggle_status(self):
         self.is_active = not self.is_active
         self.save()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
 
 
 class UserTeam(db.Model):

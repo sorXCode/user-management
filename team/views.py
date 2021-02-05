@@ -111,12 +111,22 @@ class TeamSearch(MethodView):
 class ToggleTeamStatus(MethodView):
     decorators = [login_required, ]
 
-    def get(self):
+    def put(self):
         team_name = request.args["team_name"]
         team = Team.get_team_by_name(name=team_name)
         team.toggle_status()
         flash(f"{team_name} {'activated' if team.is_active else 'deactivated'}")
-        return redirect(url_for("team_bp.teams"))
+        return "operation completed"
+
+class DeleteTeam(MethodView):
+    decorators = [login_required, ]
+
+    def delete(self):
+        team_name = request.args["team_name"]
+        team = Team.get_team_by_name(name=team_name)
+        team.delete()
+        flash(f"{team_name} deleted")
+        return "operation completed"
 
 def generate_add_user_to_team_form(team):
     def get_downlines_not_in_team():
@@ -132,6 +142,7 @@ team_bp.add_url_rule("/teams", view_func=TeamsList.as_view("teams"))
 team_bp.add_url_rule("/teams", view_func=TeamCreation.as_view("create_team"))
 team_bp.add_url_rule("/teams/toggle", view_func=ToggleTeamStatus.as_view("toggle_team_status"))
 team_bp.add_url_rule("/teams/search", view_func=TeamSearch.as_view("search_team"))
+team_bp.add_url_rule("/teams/delete", view_func=DeleteTeam.as_view("delete_team"))
 team_bp.add_url_rule("/teams/<team_name>", view_func=TeamView.as_view("team_view"))
 team_bp.add_url_rule("/teams/<team_name>/users/<user_id>", view_func=RemoveTeamUser.as_view("remove_team_user"))
 team_bp.add_url_rule("/teams/<team_name>/users", view_func=AddTeamUsers.as_view("add_team_user"))
