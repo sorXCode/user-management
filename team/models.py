@@ -29,7 +29,7 @@ class Team(db.Model):
 
     @classmethod
     def search_team_by_part_name(cls, part_name):
-        pass
+        return cls.query.filter(cls.name.contains(part_name)).all()
 
     @classmethod
     def create_team(cls, name, description, creator_id):

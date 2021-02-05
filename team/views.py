@@ -37,7 +37,8 @@ class TeamsList(MethodView):
     def get(self):
         teams = current_user.get_all_teams()
         form = TeamCreationForm()
-        return render_template("teams.html", form=form, teams=teams)
+        search_form = TeamSearchForm()
+        return render_template("teams.html", form=form, search_form=search_form, teams=teams)
     
 class TeamView(MethodView):
     decorators = [login_required,]
@@ -100,13 +101,13 @@ class RemoveTeamUser(MethodView):
 class TeamSearch(MethodView):
     decorators = [login_required, ]
 
-    def post(self):
-        form = TeamSearchForm()
-        team = None
+    def get(self):
+        team_name = request.args.get("team_name", None)
+        teams = None
 
-        if form.validate_on_submit():
-            team = Team.search_by_part_name(form.name.data)
-        return render_template("teamsearch_result.html", team=team)
+        if team_name: 
+            teams = Team.search_team_by_part_name(team_name)
+        return render_template("teamsearch_result.html", teams=teams)
 
 class ToggleTeamStatus(MethodView):
     decorators = [login_required, ]
@@ -137,6 +138,7 @@ def generate_add_user_to_team_form(team):
     form = AddUserToTeamForm()
     form.users.choices = [(user.email, user.email,) for user in get_downlines_not_in_team()]
     return form
+
 
 team_bp.add_url_rule("/teams", view_func=TeamsList.as_view("teams"))
 team_bp.add_url_rule("/teams", view_func=TeamCreation.as_view("create_team"))
