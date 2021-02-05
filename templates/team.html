@@ -34,11 +34,24 @@
             <div class="edit_user">
             </div>
             <div class ="delete_user">
-                <span class="font_bold text_title"><a href="#">remove</a></span>
+                <span class="font_bold text_title"><button onclick="remove_user_from_team('{{team.id}}', '{{user.id}}')">remove</button></span>
                 <i class="fa fa-trash"></i>
             </div>    
         {% endfor %}
     {% endif %}
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+    function remove_user_from_team(team_id, user_id){
+        $.ajax({
+
+            url: `/teams/${team_id}/${user_id}`,
+            type: 'DELETE',
+            success: function (result){
+                location.reload();
+            }
+        });
+    }
 {% endblock %}

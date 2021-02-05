@@ -22,7 +22,7 @@ class Team(db.Model):
     @classmethod
     def search_team_by_part_name(cls, part_name):
         pass
-    
+
     @classmethod
     def create_team(cls, name, description, creator_id):
         name = name.strip()
@@ -55,8 +55,18 @@ class UserTeam(db.Model):
         user_team = cls(team=team, user_id=user_id, admitted_by=admitted_by)
         user_team.save()
         return user_team
+    
 
+    @classmethod
+    def remove_user_from_team(cls, team_id, user_id):
+        entry = cls.query.filter_by(team_id=team_id, user_id=user_id).first()
+        if entry:
+            entry.delete()
 
     def save(self):
         db.session.add(self)
+        db.session.commit()
+    
+    def delete(self):
+        db.session.delete(self)
         db.session.commit()

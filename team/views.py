@@ -3,7 +3,7 @@ from flask import (Blueprint, flash, g, redirect,
 from flask.views import MethodView, View
 from flask_login import current_user, login_required, login_user, logout_user
 from .forms import TeamCreationForm, TeamSearchForm
-from .models import Team
+from .models import Team, UserTeam
 
 team_bp = Blueprint("team_bp", __name__)
 
@@ -68,6 +68,13 @@ class TeamView(MethodView):
         flash('Team update failed', 'failed')
         return redirect(url_for("team_bp.teams"))
 
+class RemoveTeamMember(MethodView):
+    decorators = [login_required,]
+
+    def delete(self, team_id=None, user_id=None):
+        UserTeam.remove_user_from_team(team_id=team_id, user_id=user_id)
+        return "Operation completed"
+
 class TeamSearch(MethodView):
     decorators = [login_required, ]
 
@@ -82,6 +89,7 @@ class TeamSearch(MethodView):
 
 
 team_bp.add_url_rule("/teams", view_func=TeamsList.as_view("teams"))
+team_bp.add_url_rule("/teams", view_func=TeamCreation.as_view("create_team"))
 team_bp.add_url_rule("/teams/search", view_func=TeamSearch.as_view("search_team"))
 team_bp.add_url_rule("/teams/<team_name>", view_func=TeamView.as_view("team_view"))
-team_bp.add_url_rule("/teams", view_func=TeamCreation.as_view("create_team"))
+team_bp.add_url_rule("/teams/<int:team_id>/<int:user_id>", view_func=RemoveTeamMember.as_view("remove_team_member"))
