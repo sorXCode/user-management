@@ -242,7 +242,7 @@ class User(UserMixin, db.Model):
         return f"<User {self.email}"
 
     def get_all_teams(self):
-        return (user_team.team for user_team in self.teams.all())
+        return set(user_team.team for user_team in self.teams.all())
     
     @classmethod
     def get_user_by_id(cls, user_id):

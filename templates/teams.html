@@ -22,11 +22,15 @@
         {% if teams %}
             {% for team in teams %}
             <div class="list_icon_text">
-                <i class="fa fa-user-o text_lightblue"></i>
-                <p class="text_primary"><a href="/teams/{{team.name}}">{{ team.name }}</a></p>
+                {% if team.is_active %}
+                    <i class="fa fa-circle-o" style="color: blue;"></i><a href="/teams/{{team.name}}">{{ team.name }}</a>
+                {% else %}
+                    <i class="fa fa-circle-o" style="color: red;"></i><a href="/teams/{{team.name}}">{{ team.name }}</a>
+                {% endif %}
             </div>
             
-            <div>
+            <div class="edit_user">
+                <span class="font_bold text_primary "><a href="{{ url_for('team_bp.toggle_team_status', team_name=team.name) }}">{{'Deactivate' if team.is_active else 'Activate'}}</a></span>
             </div>
             <div class ="delete_user">
                 <span class="font_bold text_title"><a href="#">Delete</a></span>
