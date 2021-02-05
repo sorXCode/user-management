@@ -127,11 +127,12 @@ class User(UserMixin, db.Model):
     updated_on = db.Column(db.DateTime, server_default=db.func.now(
     ), server_onupdate=db.func.now(), nullable=True)
     upline = db.relationship('Relation', backref='identity',
-                             foreign_keys="[Relation.child_id]", uselist=False, lazy=False)
+                             foreign_keys="[Relation.child_id]", uselist=False, lazy=False, cascade="all, delete")
     user_roles = db.relationship("UserRole", backref="user",
-                            foreign_keys="[UserRole.user_id]", lazy=True)
-    teams = db.relationship("UserTeam", backref="team_member", foreign_keys="[UserTeam.user_id]", lazy="dynamic")
-    requests_accepted = db.relationship("UserTeam", backref="admitter", foreign_keys="[UserTeam.admitted_by]", lazy="dynamic")
+                            foreign_keys="[UserRole.user_id]", lazy=True, cascade="all, delete")
+    teams = db.relationship("UserTeam", backref="team_member", foreign_keys="[UserTeam.user_id]", lazy="dynamic", cascade="all, delete")
+    requests_accepted = db.relationship("UserTeam", backref="admitter", foreign_keys="[UserTeam.admitted_by]", lazy="dynamic", cascade="all, delete")
+    pending_requests = db.relationship("JoinTeamRequest", backref="user", foreign_keys="[JoinTeamRequest.user_id]", lazy="dynamic", cascade="all, delete")
 
     @classmethod
     def create_first_user(cls, email="root@root.com", password="root"):

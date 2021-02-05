@@ -3,7 +3,7 @@ from flask import (Blueprint, flash, g, redirect,
 from flask.views import MethodView, View
 from flask_login import current_user, login_required, login_user, logout_user
 from .forms import TeamCreationForm, TeamUpdateForm, TeamSearchForm, AddUserToTeamForm
-from .models import Team, UserTeam
+from .models import Team, UserTeam, JoinTeamRequest
 from .exceptions import UserExistInTeam
 
 team_bp = Blueprint("team_bp", __name__)
@@ -54,7 +54,8 @@ class TeamView(MethodView):
             add_user_form = generate_add_user_to_team_form(team=team)
             
             users_in_team = team.get_all_users()
-            return render_template("team.html", users=users_in_team, team=team, update_team_form=update_team_form, add_user_form=add_user_form)
+            pending_requests = team.get_pending_requests()
+            return render_template("team.html", users=users_in_team, team=team, update_team_form=update_team_form, add_user_form=add_user_form, pending_requests=pending_requests)
         return redirect(url_for("team_bp.teams"))
     
     def post(self, team_name):
@@ -109,6 +110,41 @@ class TeamSearch(MethodView):
             teams = Team.search_team_by_part_name(team_name)
         return render_template("teamsearch_result.html", teams=teams)
 
+
+class RequestToJoinGroup(MethodView):
+    decorators = [login_required, ]
+
+    def get(self):
+        team = Team.get_team_by_name(request.args.get("team_name", ""))
+        if not team:
+            return redirect(url_for('team_bp.teams'))
+
+        actions_map = {"approve": JoinTeamRequest.approve_join_request,
+                        "reject": JoinTeamRequest.reject_join_request}
+        
+        try:
+            JoinTeamRequest.request_to_join_team(team=team, user_id=current_user.id)
+            flash("request submitted", "success")
+        except Exception as e:
+            flash(",".join(e.args), 'failed')
+
+        return redirect(url_for("team_bp.teams"))
+
+class RespondToJoinRequest(MethodView):
+    def get(self):
+        record = JoinTeamRequest.query.get(request.args.get("id"))
+        action = request.args.get("action", None)
+        actions_map = {
+                        "approve": JoinTeamRequest.approve_join_request,
+                        "reject": JoinTeamRequest.reject_join_request,
+                        "1": JoinTeamRequest.approve_join_request,
+                        "0": JoinTeamRequest.reject_join_request,
+                        }
+        
+        if record and action in actions_map:
+            actions_map[action](team=record.team, user_id=record.user_id)        
+        
+        return redirect(url_for('team_bp.teams'))
 class ToggleTeamStatus(MethodView):
     decorators = [login_required, ]
 
@@ -145,6 +181,8 @@ team_bp.add_url_rule("/teams", view_func=TeamCreation.as_view("create_team"))
 team_bp.add_url_rule("/teams/toggle", view_func=ToggleTeamStatus.as_view("toggle_team_status"))
 team_bp.add_url_rule("/teams/search", view_func=TeamSearch.as_view("search_team"))
 team_bp.add_url_rule("/teams/delete", view_func=DeleteTeam.as_view("delete_team"))
+team_bp.add_url_rule("/teams/join", view_func=RequestToJoinGroup.as_view("join_team"))
+team_bp.add_url_rule("/teams/process_join", view_func=RespondToJoinRequest.as_view("respond_to_join_request"))
 team_bp.add_url_rule("/teams/<team_name>", view_func=TeamView.as_view("team_view"))
-team_bp.add_url_rule("/teams/<team_name>/users/<user_id>", view_func=RemoveTeamUser.as_view("remove_team_user"))
-team_bp.add_url_rule("/teams/<team_name>/users", view_func=AddTeamUsers.as_view("add_team_user"))
+team_bp.add_url_rule("/teams/<team_name>/members/<user_id>", view_func=RemoveTeamUser.as_view("remove_team_user"))
+team_bp.add_url_rule("/teams/<team_name>/members", view_func=AddTeamUsers.as_view("add_team_user"))

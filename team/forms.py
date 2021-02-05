@@ -11,6 +11,7 @@ class TeamCreationForm(BaseTeamForm):
     description = StringField(validators=[InputRequired("Field is required"), ])
 
 TeamUpdateForm = TeamCreationForm
+
 class TeamSearchForm(BaseTeamForm):
     pass
 

@@ -27,6 +27,7 @@
 {% endif %}
 
 <div class="user_list">
+    Team members
     <div class="list">
         {% if users %}
             {% for user in users %}
@@ -43,6 +44,25 @@
             </div>    
         {% endfor %}
     {% endif %}
+</div>
+Pending requests
+<div class="list">
+    {% if pending_requests %}
+    {% for user, request_id in pending_requests %}
+    <div class="list_icon_text">
+        <i class="fa fa-user-o text_lightblue"></i>
+        <p class="text_primary">{{ user.email }}</a></p>
+    </div>
+    
+    <div class="edit_user">
+        <span class="font_bold text_title"><button onclick="respond_to_request('{{ request_id }}', '0')">reject</button></span>
+    </div>
+    <div class ="delete_user">
+        <span class="font_bold text_title"><button onclick="respond_to_request('{{ request_id }}', '1')">accept</button></span>
+        <i class="fa fa-trash"></i>
+    </div>    
+{% endfor %}
+{% endif %}
 
 </div>
 {% endblock %}
@@ -53,6 +73,15 @@
 
             url: `/teams/${team_id}/members/${user_id}`,
             type: 'DELETE',
+            success: function (result){
+                location.reload();
+            }
+        });
+    }
+    function respond_to_request(id, action){
+        $.ajax({
+            url: `{{url_for("team_bp.respond_to_join_request")}}?id=${id}&action=${action}`,
+            type: 'GET',
             success: function (result){
                 location.reload();
             }
