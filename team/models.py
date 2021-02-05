@@ -1,6 +1,6 @@
 from app import db
 from flask_login import current_user
-from .exceptions import TeamExists, TeamNotFound
+from .exceptions import TeamExists, TeamNotFound, UserExistInTeam
 class Team(db.Model):
     __tablename__ = "teams"
     id = db.Column(db.Integer, primary_key=True)
@@ -41,6 +41,10 @@ class Team(db.Model):
     def save(self):
         db.session.add(self)
         db.session.commit()
+    
+    def get_all_users(self):
+        return list(set(user_team.team_member for user_team in self.user_team.all()))
+    
 
 
 class UserTeam(db.Model):
@@ -51,15 +55,22 @@ class UserTeam(db.Model):
     admitted_by = db.Column(db.Integer, db.ForeignKey("users.id"))
 
     @classmethod
+    def is_user_in_team(cls, team, user_id):
+        return bool(cls.query.filter_by(team=team, user_id=user_id).first())
+
+
+    @classmethod
     def admit_user_to_team(cls, team, user_id, admitted_by):
+        if cls.is_user_in_team(team=team, user_id=user_id):
+            raise UserExistInTeam
         user_team = cls(team=team, user_id=user_id, admitted_by=admitted_by)
         user_team.save()
         return user_team
-    
+
 
     @classmethod
-    def remove_user_from_team(cls, team_id, user_id):
-        entry = cls.query.filter_by(team_id=team_id, user_id=user_id).first()
+    def remove_user_from_team(cls, team, user_id):
+        entry = cls.query.filter_by(team=team, user_id=user_id).first()
         if entry:
             entry.delete()
 

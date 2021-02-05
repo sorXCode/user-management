@@ -1,0 +1,9 @@
+{% from 'macros.html' import format_form %}
+{% extends "base.html" %}
+
+{% block content %}
+<div id="registerModal" class="modal">
+    {{ format_form(form=form, action="{{ url_for('team_bp.add_team_member')}}", submit_value="Add Member") }}
+</div>
+
+{% endblock %}

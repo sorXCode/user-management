@@ -10,11 +10,15 @@
 
 {% if current_user.is_admin or current_user.is_super_admin %}
     <div id="editModal" class="modal">
-        {{ format_form(form=form, action=url_for("team_bp.team_view", team_name=team.name), submit_value="Update Team") }}
+        {{ format_form(form=update_team_form, action=url_for("team_bp.team_view", team_name=team.name), submit_value="Update Team") }}
+    </div>
+    <div id="addTeamMemberModal" class="modal">
+        {{ format_form(form=add_user_form, action=url_for("team_bp.add_team_user", team_name=team.name), submit_value="Add User") }}
     </div>
     <div class="create_user text_lightblue">
         <i class="fa fa-plus-square fa-2x"></i>
-        <p> <a href="#editModal" rel="modal:open">Edit team</a></p>
+        <p> <a href="#editModal" rel="modal:open">Edit team</a>
+        <a href="#addTeamMemberModal" rel="modal:open">Add Users</a></p>
     </div>
 {% endif %}
 
@@ -34,7 +38,7 @@
             <div class="edit_user">
             </div>
             <div class ="delete_user">
-                <span class="font_bold text_title"><button onclick="remove_user_from_team('{{team.id}}', '{{user.id}}')">remove</button></span>
+                <span class="font_bold text_title"><button onclick="remove_user_from_team('{{team.name}}', '{{user.id}}')">remove</button></span>
                 <i class="fa fa-trash"></i>
             </div>    
         {% endfor %}
@@ -47,7 +51,7 @@
     function remove_user_from_team(team_id, user_id){
         $.ajax({
 
-            url: `/teams/${team_id}/${user_id}`,
+            url: `/teams/${team_id}/members/${user_id}`,
             type: 'DELETE',
             success: function (result){
                 location.reload();
