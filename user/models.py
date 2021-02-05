@@ -252,6 +252,9 @@ class User(UserMixin, db.Model):
     def get_downlines(self):
         return Relation.get_all_downlines_for_user_id(user_id=self.id)
 
+    def get_pending_join_requests(self):
+        return list(set(join_request.team for join_request in self.pending_requests.all()))
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.get_user_by_id(user_id=user_id)

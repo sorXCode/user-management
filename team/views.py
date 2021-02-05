@@ -38,7 +38,8 @@ class TeamsList(MethodView):
         teams = current_user.get_all_teams()
         form = TeamCreationForm()
         search_form = TeamSearchForm()
-        return render_template("teams.html", form=form, search_form=search_form, teams=teams)
+        pending_requests = current_user.get_pending_join_requests()
+        return render_template("teams.html", form=form, search_form=search_form, teams=teams, pending_requests=pending_requests)
     
 class TeamView(MethodView):
     decorators = [login_required,]

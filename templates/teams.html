@@ -38,8 +38,19 @@
             </div>    
         {% endfor %}
     {% endif %}
-
 </div>
+<h3>Pending Requests</h3>
+{% if pending_requests %}
+    <div class="user_list">
+        <div class="list">
+        {% for team in pending_requests %}
+            <div class="list_icon_text">
+                <i class="fa fa-circle-o" style="color: blue;"></i>{{ team.name }}
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+{% endif %}
 {% endblock %}
 {% block scripts %}
     function toggleTeamStatus(team_name){
