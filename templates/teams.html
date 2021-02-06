@@ -24,18 +24,27 @@
             <div class="list_icon_text">
                 {% if team.is_active %}
                     <i class="fa fa-circle-o" style="color:green;"></i><a href="/teams/{{team.name}}">{{ team.name }}</a>
-                {% else %}
+                {% elif current_user.is_super_admin %}
                     <i class="fa fa-circle-o" style="color: red;"></i><a href="/teams/{{team.name}}">{{ team.name }}</a>
                 {% endif %}
             </div>
             <div></div>
+            {% if current_user.is_super_admin %}
             <div class="edit_user">
                 <span class="font_bold text_primary "><button onclick="toggleTeamStatus('{{team.name}}')">{{'Deactivate' if team.is_active else 'Activate'}}</button></span>
             </div>
+            {% else %}
+            <div></div>
+            {% endif %}
+            
+            {% if current_user.is_super_admin or current_user.is_admin %}
             <div class ="delete_user">
                 <span class="font_bold text_title"><button onclick="deleteTeam('{{team.name}}')">Delete</button></span>
                 <i class="fa fa-trash"></i>
             </div>
+            {% else %}
+            <div></div>
+            {% endif %}
         </div>
         {% endfor %}
         {% endif %}

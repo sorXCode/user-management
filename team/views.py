@@ -6,6 +6,7 @@ from .forms import TeamCreationForm, TeamUpdateForm, TeamSearchForm, AddUserToTe
 from .models import Team, UserTeam, JoinTeamRequest
 from .exceptions import UserExistInTeam
 from user.utils import access_level
+from team.utils import is_team_member
 
 team_bp = Blueprint("team_bp", __name__)
 
@@ -48,16 +49,23 @@ class TeamView(MethodView):
     def get(self, team_name=None):
         if team_name:
             team = Team.get_team_by_name(name=team_name)
-            
-            update_team_form = TeamUpdateForm()
-            update_team_form.name.data = team.name
-            update_team_form.description.data = team.description
+            team_users = team.get_all_users()
 
-            add_user_form = generate_add_user_to_team_form(team=team)
-            
-            users_in_team = team.get_all_users()
-            pending_requests = team.get_pending_requests()
-            return render_template("team.html", users=users_in_team, team=team, update_team_form=update_team_form, add_user_form=add_user_form, pending_requests=pending_requests)
+            @is_team_member(team=team)
+            def create_team_view():    
+                if not team.is_active and not current_user.is_super_admin:
+                    flash(f"Team {team.name} is deactivated, contact admin", "failed")
+                    return redirect(url_for("team_bp.teams"))
+
+                update_team_form = TeamUpdateForm()
+                update_team_form.name.data = team.name
+                update_team_form.description.data = team.description
+
+                add_user_form = generate_add_user_to_team_form(team_users=team_users)
+                pending_requests = team.get_pending_requests()
+                return render_template("team.html", users=team_users, team=team, update_team_form=update_team_form, add_user_form=add_user_form, pending_requests=pending_requests)
+            return create_team_view()
+        
         return redirect(url_for("team_bp.teams"))
     
     def post(self, team_name):
@@ -66,41 +74,55 @@ class TeamView(MethodView):
         if form.validate_on_submit():
             team = Team.get_team_by_name(name=team_name)
             
-            team.name = form.name.data
-            team.description = form.description.data
-            team.save()
+            @is_team_member(team)
+            def run_logic():
+                team.name = form.name.data
+                team.description = form.description.data
+                team.save()
 
-            flash("Team updated", 'success')
-            return redirect(url_for("team_bp.team_view", team_name=team.name))
+                flash("Team updated", 'success')
+                return redirect(url_for("team_bp.team_view", team_name=team.name))
+            return run_logic()
         flash('Team update failed', 'failed')
         return redirect(url_for("team_bp.teams"))
 
 class AddTeamUsers(MethodView):
-    decorators = [login_required, ]
+    decorators = [login_required, access_level(["admin", "super_admin",])]
 
     def post(self, team_name=None):
         team = Team.get_team_by_name(team_name)
-        form = generate_add_user_to_team_form(team=team)
+        team_users = team.get_all_users()
+        
+        @is_team_member(team=team, users=team_users)
+        def run_logic():
+            form = generate_add_user_to_team_form(team_users=team_users)
 
-        if form.validate_on_submit():
-            count = 0
-            for user in form.users.data:
-                try:
-                    UserTeam.admit_user_to_team(team=team, user_id=user.id, admitted_by=current_user.id)
-                    count += 1
-                except Exception as e:
-                    flash(f"{user.email} {', '.join(e.args)}", 'failed')
+            if form.validate_on_submit():
+                count = 0
+                for user in form.users.data:
+                    try:
+                        UserTeam.admit_user_to_team(team=team, user_id=user.id, admitted_by=current_user.id)
+                        count += 1
+                    except Exception as e:
+                        flash(f"{user.email} {', '.join(e.args)}", 'failed')
 
-            flash(f"{count} users added", "success")
-        return redirect(url_for("team_bp.team_view", team_name=team_name))
+                flash(f"{count} users added", "success")
+            return redirect(url_for("team_bp.team_view", team_name=team_name))
+        
+        return run_logic()
+            
 class RemoveTeamUser(MethodView):
-    decorators = [login_required,]
+    decorators = [login_required, access_level(["super_admin", "admin"])]
 
     def delete(self, team_name=None, user_id=None):
         team = Team.get_team_by_name(team_name)
-        UserTeam.remove_user_from_team(team=team, user_id=user_id)
-        return "Operation completed"
-
+        
+        @is_team_member(team=team)
+        def run_logic():
+            UserTeam.remove_user_from_team(team=team, user_id=user_id)
+            return "Operation completed"
+        
+        return run_logic()
 class TeamSearch(MethodView):
     decorators = [login_required, ]
 
@@ -167,10 +189,9 @@ class DeleteTeam(MethodView):
         flash(f"{team_name} deleted")
         return "operation completed"
 
-def generate_add_user_to_team_form(team):
+def generate_add_user_to_team_form(team_users):
     def get_downlines_not_in_team():
         registered_users = current_user.get_downlines()
-        team_users = team.get_all_users()
         return filter(lambda user: user not in team_users, registered_users)
     
     form = AddUserToTeamForm()

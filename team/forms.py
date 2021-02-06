@@ -23,7 +23,7 @@ class AddUserToTeamForm(FlaskForm):
     def validate_users(form, field):
         obj = []
         
-        for choice in field:
-            obj.append(User.get_user(email=choice.data))
+        for choice in field.data:
+            obj.append(User.get_user(email=choice))
         
         form.users.data = obj

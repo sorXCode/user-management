@@ -149,6 +149,10 @@ body {
   color: #3b9668;
 }
 
+.checkbox {
+  height: 25px;
+  width: 25px;
+}
 .container{
   display: grid;
   height: 100vh;

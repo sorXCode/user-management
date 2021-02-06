@@ -27,10 +27,11 @@
 {% endif %}
 
 <div class="user_list">
+    {% if current_user.is_admin or current_user.is_super_admin %}
     Team members
-    <div class="list">
-        {% if users %}
-            {% for user in users %}
+    {% if users %}
+    {% for user in users %}
+        <div class="list">
             <div class="list_icon_text">
                 <i class="fa fa-user-o text_lightblue"></i>
                 <p class="text_primary">{{ user.email }}</a></p>
@@ -42,9 +43,10 @@
                 <span class="font_bold text_title"><button onclick="remove_user_from_team('{{team.name}}', '{{user.id}}')">remove</button></span>
                 <i class="fa fa-trash"></i>
             </div>    
+        </div>
         {% endfor %}
     {% endif %}
-</div>
+
 Pending requests
 <div class="list">
     {% if pending_requests %}
@@ -61,10 +63,10 @@ Pending requests
         <span class="font_bold text_title"><button onclick="respond_to_request('{{ request_id }}', '1')">accept</button></span>
         <i class="fa fa-trash"></i>
     </div>    
-{% endfor %}
-{% endif %}
-
+    {% endfor %}
+    {% endif %}
 </div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
