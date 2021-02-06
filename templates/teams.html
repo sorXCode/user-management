@@ -18,39 +18,40 @@
 {% endif %}
 
 <div class="user_list">
-    <div class="list">
-        {% if teams %}
-            {% for team in teams %}
+    {% if teams %}
+        {% for team in teams %}
+        <div class="list">
             <div class="list_icon_text">
                 {% if team.is_active %}
-                    <i class="fa fa-circle-o" style="color: blue;"></i><a href="/teams/{{team.name}}">{{ team.name }}</a>
+                    <i class="fa fa-circle-o" style="color:green;"></i><a href="/teams/{{team.name}}">{{ team.name }}</a>
                 {% else %}
                     <i class="fa fa-circle-o" style="color: red;"></i><a href="/teams/{{team.name}}">{{ team.name }}</a>
                 {% endif %}
             </div>
-            
+            <div></div>
             <div class="edit_user">
                 <span class="font_bold text_primary "><button onclick="toggleTeamStatus('{{team.name}}')">{{'Deactivate' if team.is_active else 'Activate'}}</button></span>
             </div>
             <div class ="delete_user">
                 <span class="font_bold text_title"><button onclick="deleteTeam('{{team.name}}')">Delete</button></span>
                 <i class="fa fa-trash"></i>
-            </div>    
+            </div>
+        </div>
         {% endfor %}
-    {% endif %}
+        {% endif %}
 </div>
 <h3>Pending Requests</h3>
-{% if pending_requests %}
-    <div class="user_list">
+<div class="user_list">
+    {% if pending_requests %}
+    {% for team in pending_requests %}
         <div class="list">
-        {% for team in pending_requests %}
             <div class="list_icon_text">
                 <i class="fa fa-circle-o" style="color: blue;"></i>{{ team.name }}
             </div>
-        {% endfor %}
         </div>
-    </div>
-{% endif %}
+    {% endfor %}
+    {% endif %}
+</div>
 {% endblock %}
 {% block scripts %}
     function toggleTeamStatus(team_name){

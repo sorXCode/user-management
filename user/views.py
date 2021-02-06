@@ -11,7 +11,7 @@ user_bp = Blueprint("user_bp", __name__)
 
 
 @user_bp.before_app_first_request
-def create_roles_and_one_super_admin():
+def create_roles_and_one_superadmin():
     if Role.insert_roles():
         print(f"created roles at app start")
     if Permission.insert_permissions():
@@ -117,10 +117,10 @@ class ToggleBlockStatus(MethodView):
 def generate_account_creation_form():
     form = AccountCreationForm()
 
-    if current_user.is_super_admin():
+    if current_user.is_super_admin:
         form.user_type.choices = [
             ("super-admin", "super-admin"), ("admin", "admin"), ]
-    elif current_user.is_admin():
+    elif current_user.is_admin:
         form.user_type.choices = [("admin", "admin"), ("user", "user")]
 
     return form

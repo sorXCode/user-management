@@ -5,12 +5,13 @@ from flask_login import current_user, login_required, login_user, logout_user
 from .forms import TeamCreationForm, TeamUpdateForm, TeamSearchForm, AddUserToTeamForm
 from .models import Team, UserTeam, JoinTeamRequest
 from .exceptions import UserExistInTeam
+from user.utils import access_level
 
 team_bp = Blueprint("team_bp", __name__)
 
 
 class TeamCreation(MethodView):
-    decorators = [login_required, ]
+    decorators = [login_required, access_level(["admin", "super_admin"]), ]
 
     def post(self):
         form = TeamCreationForm()

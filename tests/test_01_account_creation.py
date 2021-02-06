@@ -61,7 +61,7 @@ class TestAccountCreation(BaseTestCase):
 
 def create_account(self, test_client, user_data, user_role, new_account_data, new_account_role, should_be_successful=True):
     login(test_client, user_data)
-    self.assertEqual(eval(f"current_user.is_{user_role}()"), True)
+    self.assertEqual(eval(f"current_user.is_{user_role}"), True)
 
     # create new_user
     response = register(test_client, new_account_data)
@@ -72,7 +72,7 @@ def create_account(self, test_client, user_data, user_role, new_account_data, ne
         login(test_client, new_account_data)
 
         self.assertEqual(new_account_data.get("email", None), current_user.email)
-        self.assertEqual(eval(f"current_user.is_{new_account_role}()"), True)
+        self.assertEqual(eval(f"current_user.is_{new_account_role}"), True)
     else:
         self.assertIn(b"cannot create account", response.data)
    

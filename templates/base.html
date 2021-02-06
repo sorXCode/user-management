@@ -73,7 +73,7 @@
                     <i class="fa fa-home"></i>
                     <a href="{{ url_for('user_bp.dashboard') }}">Dashboard</a>
                 </div>
-                {% if current_user.is_admin() or current_user.is_super_admin() %}
+                {% if current_user.is_admin or current_user.is_super_admin %}
                 <div class="sidebar_link">
                     <i class="fa fa-user-secret"></i>
                     <a href="{{ url_for('user_bp.users') }}">User Management</a>

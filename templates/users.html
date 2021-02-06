@@ -7,7 +7,7 @@
 
 {% block content %}
 
-{% if current_user.is_admin or current_user.is_super_admin %}
+{% if current_user.is_admin or current_user.is_super_admin%}
     <div id="registerModal" class="modal">
         {{ format_form(form=form, action="/register/", submit_value="Create Account") }}
     </div>
@@ -22,7 +22,7 @@
         {% if users %}
         {% for user in users %}
         <div class="list_icon_text">
-            <p class="text_primary fa fa-user-o"><a href="/users/{{user.email}}">{{ user.email }}</a></p>
+            <p class="text_primary fa fa-user-o"><a href="/users/{{user.email}}">{{ user.email }} ({{ user.get_roles() }})</a></p>
         </div>
         
         <div class="edit_user">

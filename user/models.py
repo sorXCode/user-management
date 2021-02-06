@@ -135,6 +135,18 @@ class User(UserMixin, db.Model):
     requests_accepted = db.relationship("UserTeam", backref="admitter", foreign_keys="[UserTeam.admitted_by]", lazy="dynamic", cascade="all, delete")
     pending_requests = db.relationship("JoinTeamRequest", backref="user", foreign_keys="[JoinTeamRequest.user_id]", lazy="dynamic", cascade="all, delete")
 
+    @property
+    def is_admin(self):
+        return self._is_admin()
+    
+    @property
+    def is_super_admin(self):
+        return self._is_super_admin()
+    
+    @property
+    def is_user(self):
+        return self._is_user()
+    
     @classmethod
     def create_first_user(cls, email="root@root.com", password="root"):
         if cls.query.filter_by().first():
@@ -168,14 +180,13 @@ class User(UserMixin, db.Model):
 
     @classmethod
     def create_user(cls, email, password, is_admin=False, is_super_admin=False):
-        if not (current_user.is_admin() or current_user.is_super_admin()):
+        if not (current_user.is_admin or current_user.is_super_admin):
             raise Unauthorized
 
         if cls.get_user(email=email):
             raise UserExists
 
-        user = cls(email=email, is_admin=is_admin,
-                   is_super_admin=is_super_admin)
+        user = cls(email=email)
 
         user.password = password
 
@@ -199,13 +210,13 @@ class User(UserMixin, db.Model):
 
     @classmethod
     def create_super_admin(cls, email, password):
-        if current_user.is_super_admin():
+        if current_user.is_super_admin:
             return cls.create_user(email=email, password=password, is_super_admin=True)
         raise Unauthorized
 
     @classmethod
     def create_admin(cls, email, password):
-        if current_user.is_admin() or current_user.is_super_admin():
+        if current_user.is_admin or current_user.is_super_admin:
             return cls.create_user(email=email, password=password, is_admin=True)
         raise Unauthorized
 
@@ -231,13 +242,13 @@ class User(UserMixin, db.Model):
         return result
 
 
-    def is_admin(self):
+    def _is_admin(self):
         return self.can(Role.get_admin_role())
 
-    def is_super_admin(self):
+    def _is_super_admin(self):
         return self.can(Role.get_super_admin_role())
 
-    def is_user(self):
+    def _is_user(self):
         return self.can(Role.get_user_role())
 
     def __repr__(self):
@@ -259,6 +270,12 @@ class User(UserMixin, db.Model):
     def toggle_block_status(self):
         self.is_blocked = not self.is_blocked
         self.save()
+    
+    def get_roles(self):
+        db.session.add(self)
+        roles = ", ".join([user_role.role.name for user_role in self.user_roles])
+        db.session.remove()
+        return roles
     
     def save(self):
         db.session.add(self)
