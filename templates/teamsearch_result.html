@@ -1,0 +1,4 @@
+{% for team in teams %}
+    <p>{{team.name}}
+    <a href="{{ url_for('team_bp.join_team')}}?team_name={{team.name}}">Join</a></p>
+{% endfor %}

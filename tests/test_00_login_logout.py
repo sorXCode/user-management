@@ -1,5 +1,5 @@
 from . import BaseTestCase, db
-from user.models import User, Role
+from user.models import User, Role, UserRole, Permission
 from flask import url_for
 from flask_login import current_user
 from .utils import logout, login, register
@@ -14,13 +14,20 @@ class TestLogin(BaseTestCase):
         db.drop_all()
         db.create_all()
         Role.insert_roles()
+        Permission.insert_permissions()
+        User.create_first_user()
+
 
         # create default accounts for tests
         for role in self.user_data:
+            
+            if role =="user":
+                continue
+
             user = {"email": self.user_data[role]["email"]}
             user = User(**user)
             user.password = self.user_data[role]["password"]
-            user.role = Role.query.filter_by(name=role).first()
+            user.user_roles.append(UserRole(role=eval(f"Role.get_{role}_role()"), user=user))
             db.session.add(user)
 
         db.session.commit()

@@ -11,3 +11,6 @@ class AccountCreationForm(FlaskForm):
     email = EmailField(validators=[InputRequired("Field is required"), ])
     password = PasswordField(validators=[InputRequired("Field is required"),])
     user_type = SelectField(choices=[], validators=[InputRequired("Field is required"),])
+
+class AccountUpdateForm(FlaskForm):
+    email = EmailField(validators=[InputRequired("Field is required"), ])

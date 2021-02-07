@@ -27,10 +27,15 @@
             <div class="nav_icon" onclick="toggleSidebar()">
                 <i class="fa fa-bars"></i>
             </div>
-            <div class="navbar_right">
+            <div class="navbar_left">
                 <a href="#">
                     <img width="30" src="{{ url_for('static', filename='img/undraw_male_avatar_323b.svg') }}" alt="profile">
                 </a>  
+            </div>
+            <div class="navbar_right">
+                <input type="search" name="name" id="search_team" placeholder="search team...">
+                <input type="button" value="Search" onclick="searchTeam()">
+                <a href="#searchResult" rel="modal:open" style="display: hidden;" id="displayResult"></a>
             </div>
         </nav>
         {% endblock %}
@@ -48,6 +53,8 @@
                     </div>
                     {% endif %}
                     {% endwith %}
+                    <div class="modal search-result" id="searchResult">
+                    </div>
                     {% block content %}{% endblock %}
                 </div>
             </main>
@@ -66,19 +73,12 @@
                     <i class="fa fa-home"></i>
                     <a href="{{ url_for('user_bp.dashboard') }}">Dashboard</a>
                 </div>
-                {% if current_user.is_admin() or current_user.is_super_admin() %}
+                {% if current_user.is_admin or current_user.is_super_admin %}
                 <div class="sidebar_link">
                     <i class="fa fa-user-secret"></i>
                     <a href="{{ url_for('user_bp.users') }}">User Management</a>
                 </div>
                 {% endif %}
-
-                <div class="sidebar_link">
-                    <i class="fa fa-users"></i>
-                    <a href="#">Groups</a>
-                </div>
-
-
                 <div class="sidebar_link">
                     <i class="fa fa-comment"></i>
                     <a href="#">Messages</a>
@@ -86,7 +86,7 @@
 
                 <div class="sidebar_link">
                     <i class="fa fa-handshake-o"></i>
-                    <a href="#">Teams</a>
+                    <a href="{{ url_for('team_bp.teams') }}">Teams</a>
                 </div>
                 
                 <div class="sidebar_logout">
@@ -99,6 +99,16 @@
         {% endblock %}
     </div>
     <script>
+        function searchTeam(){
+            var value = $("#search_team").val();
+            var result = $("#searchResult");
+            if (value){
+                $.get(`{{url_for("team_bp.search_team")}}?team_name=${value}`, (data, status)=>{
+                    result.append(data);
+                   $("#displayResult").click();
+                });
+            }
+        }
         {% block scripts %}{% endblock %}
     </script>
     </div>

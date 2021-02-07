@@ -7,36 +7,56 @@
 
 {% block content %}
 
-{% if current_user.is_admin or current_user.is_super_admin %}
+{% if current_user.is_admin or current_user.is_super_admin%}
     <div id="registerModal" class="modal">
-        {{ format_form(form=form, action="/register/", submit_value="Create Account") }}
+        {{ format_form(form=form, action='{{url_for("user_bp.register")}}', submit_value="Create Account") }}
+    </div>
+    <div id="editUserModal" class="modal">
+    </div>
+    <div class="create_user text_lightblue">
+        <i class="fa fa-plus-square fa-2x"></i>
+        <p> <a href="#registerModal" rel="modal:open">Create New User</a></p>
     </div>
 {% endif %}
-<div class="create_user text_lightblue">
-    <i class="fa fa-plus-square fa-2x"></i>
-    <p> <a href="#registerModal" rel="modal:open">Create New User</a></p>
-</div>
 
 <div class="user_list">
     <div class="list">
         {% if users %}
         {% for user in users %}
         <div class="list_icon_text">
-            <i class="fa fa-user-o text_lightblue"></i>
-            <p class="text_primary"><a href="/users/{{user.email}}">{{ user.email }}</a></p>
+            <p class="text_primary fa fa-user-o"><a href="/users/{{user.email}}">{{ user.email }} ({{ user.get_roles() }})</a></p>
         </div>
         
         <div class="edit_user">
-            <span class="font_bold text_title"><a href="#">Edit</a></span>
+            <span class="font_bold text_title"><button onclick="get_user_edit_form('{{user.email}}')"><a href="#editUserModal" rel="modal:open">Edit</a></button></span>
             <i class="fa fa-pencil"></i>
         </div>
         <div class ="delete_user">
-            <span class="font_bold text_title"><a href="#">Delete</a></span>
+            <span class="font_bold text_title"><button onclick="delete_user('{{user.email}}')">Delete</a></span>
             <i class="fa fa-trash"></i>
+        </div>
+        <div>
+            <span class="font_bold text_title"><a href="{{url_for('user_bp.toggle_block_status', user_email=user.email)}}">{{ 'Unblock' if user.is_blocked else 'Block'}}</a></span>
         </div>    
-    </div>
     {% endfor %}
     {% endif %}
 
 </div>
+{% endblock %}
+{% block scripts %}
+    function delete_user(user_email){
+        $.ajax({
+            url: `{{url_for("user_bp.users")}}?user_email=${user_email}`,
+            type: 'DELETE',
+            success: function (result){
+                location.reload();
+            }
+        });
+    }
+
+    function get_user_edit_form(user_email){
+        $.get(`{{url_for('user_bp.edit_user')}}?user_email=${user_email}`, function(data, status){
+            $("#editUserModal").append(data);
+        })
+    }
 {% endblock %}

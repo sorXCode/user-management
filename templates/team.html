@@ -1,0 +1,92 @@
+{% from 'macros.html' import format_form %}
+{% extends "base.html" %}
+
+{% block header_imports %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+{% endblock %}
+
+{% block content %}
+
+
+{% if current_user.is_admin or current_user.is_super_admin%}
+    <div id="editModal" class="modal">
+        {{ format_form(form=update_team_form, action=url_for("team_bp.team_view", team_name=team.name), submit_value="Update Team") }}
+    </div>
+    <div id="addTeamMemberModal" class="modal">
+        {{ format_form(form=add_user_form, action=url_for("team_bp.add_team_user", team_name=team.name), submit_value="Add User") }}
+    </div>
+    <div class="create_user text_lightblue">
+        <i class="fa fa-plus-square fa-2x"></i>
+        <p> <a href="#editModal" rel="modal:open">Edit team</a>
+        <a href="#addTeamMemberModal" rel="modal:open">Add Users</a></p>
+    </div>
+{% endif %}
+
+{% if team %}
+<h2>{{ team.name }}</h2>
+{% endif %}
+
+<div class="user_list">
+    {% if current_user.is_admin or current_user.is_super_admin %}
+    Team members
+    {% if users %}
+    {% for user in users %}
+        <div class="list">
+            <div class="list_icon_text">
+                <i class="fa fa-user-o text_lightblue"></i>
+                <p class="text_primary">{{ user.email }}</a></p>
+            </div>
+            
+            <div class="edit_user">
+            </div>
+            <div class ="delete_user">
+                <span class="font_bold text_title"><button onclick="remove_user_from_team('{{team.name}}', '{{user.id}}')">remove</button></span>
+                <i class="fa fa-trash"></i>
+            </div>    
+        </div>
+        {% endfor %}
+    {% endif %}
+
+Pending requests
+<div class="list">
+    {% if pending_requests %}
+    {% for user, request_id in pending_requests %}
+    <div class="list_icon_text">
+        <i class="fa fa-user-o text_lightblue"></i>
+        <p class="text_primary">{{ user.email }}</a></p>
+    </div>
+    
+    <div class="edit_user">
+        <span class="font_bold text_title"><button onclick="respond_to_request('{{ request_id }}', '0')">reject</button></span>
+    </div>
+    <div class ="delete_user">
+        <span class="font_bold text_title"><button onclick="respond_to_request('{{ request_id }}', '1')">accept</button></span>
+        <i class="fa fa-trash"></i>
+    </div>    
+    {% endfor %}
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+    function remove_user_from_team(team_name, user_id){
+        $.ajax({
+
+            url: `/teams/${team_name}/members/${user_id}`,
+            type: 'DELETE',
+            success: function (result){
+                location.reload();
+            }
+        });
+    }
+    function respond_to_request(id, action){
+        $.ajax({
+            url: `{{url_for("team_bp.respond_to_join_request")}}?id=${id}&action=${action}`,
+            type: 'GET',
+            success: function (result){
+                location.reload();
+            }
+        });
+    }
+{% endblock %}

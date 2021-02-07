@@ -1,0 +1,85 @@
+{% from 'macros.html' import format_form %}
+{% extends "base.html" %}
+
+{% block header_imports %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+{% endblock %}
+
+{% block content %}
+
+{% if current_user.is_admin or current_user.is_super_admin %}
+<div id="registerModal" class="modal">
+    {{ format_form(form=form, action=url_for('team_bp.create_team'), submit_value="Create Team") }}
+</div>
+<div class="create_user text_lightblue">
+    <i class="fa fa-plus-square fa-2x"></i>
+    <p> <a href="#registerModal" rel="modal:open">Create New Team</a></p>
+</div>
+{% endif %}
+
+<div class="user_list">
+    {% if teams %}
+        {% for team in teams %}
+        <div class="list">
+            <div class="list_icon_text">
+                {% if team.is_active %}
+                    <i class="fa fa-circle-o" style="color:green;"></i><a href="{{url_for('team_bp.team_view', team_name=team.name)}}">{{ team.name }}</a>
+                {% elif current_user.is_super_admin %}
+                    <i class="fa fa-circle-o" style="color: red;"></i><a href="{{url_for('team_bp.team_view', team_name=team.name)}}">{{ team.name }}</a>
+                {% endif %}
+            </div>
+            <div></div>
+            {% if current_user.is_super_admin %}
+            <div class="edit_user">
+                <span class="font_bold text_primary "><button onclick="toggleTeamStatus('{{team.name}}')">{{'Deactivate' if team.is_active else 'Activate'}}</button></span>
+            </div>
+            {% else %}
+            <div></div>
+            {% endif %}
+            
+            {% if current_user.is_super_admin or current_user.is_admin %}
+            <div class ="delete_user">
+                <span class="font_bold text_title"><button onclick="deleteTeam('{{team.name}}')">Delete</button></span>
+                <i class="fa fa-trash"></i>
+            </div>
+            {% else %}
+            <div></div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+</div>
+<h3>Pending Requests</h3>
+<div class="user_list">
+    {% if pending_requests %}
+    {% for team in pending_requests %}
+        <div class="list">
+            <div class="list_icon_text">
+                <i class="fa fa-circle-o" style="color: blue;"></i>{{ team.name }}
+            </div>
+        </div>
+    {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+    function toggleTeamStatus(team_name){
+        $.ajax({
+        url: `{{url_for('team_bp.toggle_team_status')}}?team_name=${team_name}`,
+        type: 'PUT',
+        success: function (result){
+            location.reload();
+        }
+    });
+}
+
+function deleteTeam(team_name){
+    $.ajax({
+    url: `{{url_for('team_bp.delete_team')}}?team_name=${team_name}`,
+    type: 'DELETE',
+    success: function (result){
+        location.reload();
+    }
+    });
+    }
+{% endblock %}

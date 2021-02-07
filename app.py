@@ -8,6 +8,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from config import config
+from flask_user import UserManager
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -20,7 +21,10 @@ def create_app(environment):
     
     def register_blueprints(app):
         from user.views import user_bp
+        from team.views import team_bp
+
         app.register_blueprint(user_bp)
+        app.register_blueprint(team_bp)
 
     app = Flask(__name__)
     app.config.from_object(config[environment])
