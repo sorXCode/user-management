@@ -230,6 +230,13 @@ class User(UserMixin, db.Model):
             raise InvalidPassword
 
         return user
+    
+    def update_user(self, email):
+        if self.get_user(email):
+            raise UserExists
+
+        self.email = email
+        self.save()
 
     def can(self, role):
         # need to add role to session since its cached by the LRU
@@ -280,6 +287,11 @@ class User(UserMixin, db.Model):
     def save(self):
         db.session.add(self)
         db.session.commit()
+    
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+    
 
 
 @login_manager.user_loader

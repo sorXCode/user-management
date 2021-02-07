@@ -3,9 +3,10 @@ from flask import (Blueprint, flash, g, redirect, render_template, request,
 from flask.views import MethodView, View
 from flask_login import current_user, login_required, login_user, logout_user
 
-from .forms import LoginForm, AccountCreationForm
+from .forms import LoginForm, AccountCreationForm, AccountUpdateForm
 from .models import Activity, User, Role, Permission
 from .utils import access_level
+from .exceptions import UserNotFound
 
 user_bp = Blueprint("user_bp", __name__)
 
@@ -68,14 +69,17 @@ class Dashboard(MethodView):
 class Activities(MethodView):
     decorators = [login_required, ]
 
+    @access_level(levels=["owner", "creator", "super_admin"])
     def get(self, user_id):
-        activities, stat = Activity.get_all_activities_for_user(user_id=user_id)
+        activities, stat = Activity.get_all_activities_for_user(
+            user_id=user_id)
         return render_template("activities.html", activities=activities, stat=stat)
 
 
 class AccountCreation(MethodView):
     decorators = [login_required, ]
 
+    @access_level(levels=["super_admin", "admin"])
     def post(self):
         form = generate_account_creation_form()
         try:
@@ -93,25 +97,71 @@ class AccountCreation(MethodView):
 
         return redirect(url_for("user_bp.dashboard"))
 
-class Users(MethodView):
-    decorators = [login_required, ]
 
+class Users(MethodView):
+    decorators = [login_required, access_level(
+        levels=["super_admin", "admin", ])]
 
     def get(self):
         form = generate_account_creation_form()
         registered_user = current_user.get_downlines()
         return render_template("users.html", users=registered_user, form=form)
 
+    def delete(self):
+        email = request.args.get("user_email", None)
+        user = User.get_user(email)
+        if user not in current_user.get_downlines():
+            return redirect(url_for('user_bp.dashboard'))
+
+        user.delete()
+        flash("account deleted")
+        return "operation completed"
+
 
 class ToggleBlockStatus(MethodView):
     decorators = [login_required, ]
-    
+
     @access_level(levels=["creator", "super_admin"])
     def get(self, user_email):
         user = User.get_user(email=user_email)
         if user:
             user.toggle_block_status()
         return redirect(url_for("user_bp.users"))
+
+
+class EditUser(MethodView):
+    decorators = [login_required, access_level(
+        levels=["super_admin", "admin", ])]
+
+    def get(self):
+        try:
+            user_email = request.args.get('user_email', None)
+            user = User.get_user(user_email)
+            form = AccountUpdateForm()
+            form.email.data = user.email
+            return render_template("form.html", form=form,
+                                action=f"{url_for('user_bp.edit_user')}?user_email={user_email}",
+                                submit_value="Update Account")
+        except Exception:
+            return "Error!"
+    
+    def post(self):
+        try:
+            user_email = request.args.get('user_email', None)
+            user = User.get_user(user_email)
+
+            if not user:
+                raise UserNotFound
+            
+            form = AccountUpdateForm()
+            if form.validate_on_submit():
+                user.update_user(email=form.email.data)
+                flash("User profile updated", "success")
+            flash("An error occurred", "failed")
+        except Exception as e:
+            flash(", ".join(e.args), "failed")
+        return redirect(url_for("user_bp.users"))
+            
 
 
 def generate_account_creation_form():
@@ -135,5 +185,8 @@ user_bp.add_url_rule("/activities/<user_id>/",
                      view_func=Activities.as_view("activities"))
 user_bp.add_url_rule("/users/",
                      view_func=Users.as_view("users"))
-user_bp.add_url_rule("/users/<user_email>/toggle", view_func=ToggleBlockStatus.as_view("toggle_block_status"))
-user_bp.add_url_rule("/users/<user_email>", view_func=Dashboard.as_view("user_dashboard"))
+user_bp.add_url_rule("/users/edit", view_func=EditUser.as_view("edit_user"))
+user_bp.add_url_rule("/users/<user_email>/toggle",
+                     view_func=ToggleBlockStatus.as_view("toggle_block_status"))
+user_bp.add_url_rule("/users/<user_email>",
+                     view_func=Dashboard.as_view("user_dashboard"))
