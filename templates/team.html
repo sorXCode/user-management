@@ -2,7 +2,42 @@
 {% extends "base.html" %}
 
 {% block header_imports %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/team.css') }}">
+{% endblock %}
+
+{% block navigation %}
+<nav class="navbar">
+    <div class="nav_icon" onclick="toggleSidebar()">
+        <i class="fa fa-bars"></i>
+    </div>
+    
+    {% if current_user.is_admin or current_user.is_super_admin%}
+    <div class="navbar_left">
+        <div class ="edit_user">
+            <span class="font_bold text_title"><a href="#editModal" rel="modal:open">Edit team</a></span>
+            <i class="fa fa-pencil"></i>
+        </div>
+    </div>
+    {% else %}
+    <div></div>
+    {% endif %}
+    
+    <div class="navbar_center">
+        <span class="font_bold text_title"><h2>{{team.name}}</h2></span>
+        
+    </div>
+    
+    {% if current_user.is_admin or current_user.is_super_admin%}
+    <div class="navbar_right">
+        <div class ="delete_user">
+            <span class="font_bold text_title"><a href="#addTeamMemberModal" rel="modal:open">Add Users</a></span>
+            <i class="fa fa-plus trash_color"></i>
+        </div>    
+    </div>
+    {% else %}
+    <div></div>
+    {% endif %}
+</nav>
 {% endblock %}
 
 {% block content %}
@@ -15,57 +50,48 @@
     <div id="addTeamMemberModal" class="modal">
         {{ format_form(form=add_user_form, action=url_for("team_bp.add_team_user", team_name=team.name), submit_value="Add User") }}
     </div>
-    <div class="create_user text_lightblue">
-        <i class="fa fa-plus-square fa-2x"></i>
-        <p> <a href="#editModal" rel="modal:open">Edit team</a>
-        <a href="#addTeamMemberModal" rel="modal:open">Add Users</a></p>
-    </div>
 {% endif %}
 
-{% if team %}
-<h2>{{ team.name }}</h2>
-{% endif %}
-
-<div class="user_list">
-    {% if current_user.is_admin or current_user.is_super_admin %}
-    Team members
-    {% if users %}
-    {% for user in users %}
-        <div class="list">
-            <div class="list_icon_text">
-                <i class="fa fa-user-o text_lightblue"></i>
-                <p class="text_primary">{{ user.email }}</a></p>
-            </div>
-            
-            <div class="edit_user">
-            </div>
-            <div class ="delete_user">
-                <span class="font_bold text_title"><button onclick="remove_user_from_team('{{team.name}}', '{{user.id}}')">remove</button></span>
-                <i class="fa fa-trash"></i>
-            </div>    
-        </div>
-        {% endfor %}
-    {% endif %}
-
-Pending requests
-<div class="list">
-    {% if pending_requests %}
-    {% for user, request_id in pending_requests %}
-    <div class="list_icon_text">
-        <i class="fa fa-user-o text_lightblue"></i>
-        <p class="text_primary">{{ user.email }}</a></p>
-    </div>
-    
-    <div class="edit_user">
-        <span class="font_bold text_title"><button onclick="respond_to_request('{{ request_id }}', '0')">reject</button></span>
-    </div>
-    <div class ="delete_user">
-        <span class="font_bold text_title"><button onclick="respond_to_request('{{ request_id }}', '1')">accept</button></span>
-        <i class="fa fa-trash"></i>
-    </div>    
-    {% endfor %}
-    {% endif %}
+<div class="description">
+    <p>Description: {{team.description}}</p>
 </div>
+
+{% endblock %}
+
+
+{% block aside %}
+{% if current_user.is_admin or current_user.is_super_admin %}
+<aside>
+    <div class="aside_container">
+
+        <div class="member_request">
+            <hr>
+            <h2 class="member_request_title">Pending requests</h2>
+            <hr>
+            {% if pending_requests %}
+            {% for user, request_id in pending_requests %}
+                <span class="request_name">{{ user.email }}  <button class="reject_request" onclick="respond_to_request('{{ request_id }}', '0')">reject</button>  <button class="accept_request" onclick="respond_to_request('{{ request_id }}', '1')">accept</button> </span>
+                <br>
+            {% endfor %}
+            {% endif %}
+        </div>
+
+        <hr>
+
+        <div class="member_list">
+            <h2 class="member_title">Team members</h2>
+            <hr>
+            {% if users %}
+            {% for user in users %}
+            <div class="member_name">
+                <h5> {{ user.email }} <span class="button_remove"><button onclick="remove_user_from_team('{{team.name}}', '{{user.id}}')">remove</button></span> </h5>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+        </div>
+    </div>
+</aside>
 {% endif %}
 {% endblock %}
 

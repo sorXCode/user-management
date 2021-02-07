@@ -9,7 +9,7 @@
 
 {% if current_user.is_admin or current_user.is_super_admin%}
     <div id="registerModal" class="modal">
-        {{ format_form(form=form, action='{{url_for("user_bp.register")}}', submit_value="Create Account") }}
+        {{ format_form(form=form, action=url_for('user_bp.register'), submit_value="Create Account") }}
     </div>
     <div id="editUserModal" class="modal">
     </div>
