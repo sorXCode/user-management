@@ -52,8 +52,7 @@ class TestAccountCreation(BaseTestCase):
 
 
     def test_admin_create_user(self):
-        user = {"email": fake.email(
-        ), "password": fake.text(), "user_type": "user"}
+        user = {**self.user_data["user"], "user_type": "user"}
         with self.test_client as test_client:
             create_account(self=self, test_client=test_client, user_data=self.user_data["admin"],
                            user_role="admin", new_account_data=user, new_account_role="user")

@@ -20,6 +20,10 @@ class TestLogin(BaseTestCase):
 
         # create default accounts for tests
         for role in self.user_data:
+            
+            if role =="user":
+                continue
+
             user = {"email": self.user_data[role]["email"]}
             user = User(**user)
             user.password = self.user_data[role]["password"]
