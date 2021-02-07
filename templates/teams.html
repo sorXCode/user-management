@@ -23,9 +23,9 @@
         <div class="list">
             <div class="list_icon_text">
                 {% if team.is_active %}
-                    <i class="fa fa-circle-o" style="color:green;"></i><a href="/teams/{{team.name}}">{{ team.name }}</a>
+                    <i class="fa fa-circle-o" style="color:green;"></i><a href="{{url_for('team_bp.team_view', team_name=team.name)}}">{{ team.name }}</a>
                 {% elif current_user.is_super_admin %}
-                    <i class="fa fa-circle-o" style="color: red;"></i><a href="/teams/{{team.name}}">{{ team.name }}</a>
+                    <i class="fa fa-circle-o" style="color: red;"></i><a href="{{url_for('team_bp.team_view', team_name=team.name)}}">{{ team.name }}</a>
                 {% endif %}
             </div>
             <div></div>

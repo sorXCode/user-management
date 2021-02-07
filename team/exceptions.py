@@ -8,7 +8,7 @@ class TeamExists(Exception):
 
 class TeamNotFound(Exception):
     """
-    Exception raised for errors in creating new team using existing team name
+    Exception raised for when team is not found
     """
 
     def __init__(self, message="Team Not Found"):
@@ -16,7 +16,15 @@ class TeamNotFound(Exception):
 
 class UserExistInTeam(Exception):
     """
-    Exception raised for errors in creating new team using existing team name
+    Exception raised when duplicate user is added to team
+    """
+
+    def __init__(self, message="User exist in team already"):
+        super().__init__(message)
+
+class InvalidTeamName(Exception):
+    """
+    Exception raised when team name is not supported
     """
 
     def __init__(self, message="User exist in team already"):

@@ -18,7 +18,6 @@ class TeamCreation(MethodView):
         form = TeamCreationForm()
         try:
             if form.validate_on_submit():
-
                 Team.create_team(
                     name=form.name.data,
                     description=form.description.data,
@@ -77,14 +76,18 @@ class TeamView(MethodView):
         if form.validate_on_submit():
             try:
                 team = Team.get_team_by_name(name=team_name)
-            except TeamNotFound:
+            except Exception as e:
+                flash(", ".join(e.args))
                 return redirect(url_for("team_bp.teams"))
             
             @is_team_member(team)
             def run_logic():
-                team.name = form.name.data
-                team.description = form.description.data
-                team.save()
+                try:
+                    team.update_team(name=form.name.data, description=form.description.data)
+                except Exception as e:
+                    flash(", ".join(e.args))
+                    return redirect(url_for("team_bp.teams"))
+
 
                 flash("Team updated", 'success')
                 return redirect(url_for("team_bp.team_view", team_name=team.name))

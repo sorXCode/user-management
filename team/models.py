@@ -1,6 +1,6 @@
 from app import db
 from flask_login import current_user
-from .exceptions import TeamExists, TeamNotFound, UserExistInTeam
+from .exceptions import TeamExists, TeamNotFound, UserExistInTeam, InvalidTeamName
 
 
 class Team(db.Model):
@@ -39,6 +39,12 @@ class Team(db.Model):
         name = name.strip()
         description = description.strip()
 
+        
+        try:
+            cls.check_team_name(name=name)
+        except Exception as e:
+            raise e
+
         if cls.query.filter_by(name=name).first():
             raise TeamExists
 
@@ -48,6 +54,18 @@ class Team(db.Model):
         UserTeam.admit_user_to_team(
             team=team, user_id=creator_id, admitted_by=creator_id)
         return team
+
+    def update_team(self, name=None, description=None):
+        self.name = name.strip() or self.name
+        
+        try:
+            self.check_team_name(name=name)
+        except Exception as e:
+            raise  e
+
+        self.description = description.strip() or self.description
+        self.save()
+
 
     def save(self):
         db.session.add(self)
@@ -66,6 +84,15 @@ class Team(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
+
+    @staticmethod
+    def check_team_name(name=None):
+        if not name:
+            raise InvalidTeamName("Team name cannot be empty")
+        
+        if "/" in name:
+            raise InvalidTeamName("Team name cannot contain '/'")
+
 
 
 class UserTeam(db.Model):

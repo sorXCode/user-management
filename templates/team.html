@@ -70,10 +70,10 @@ Pending requests
 {% endblock %}
 
 {% block scripts %}
-    function remove_user_from_team(team_id, user_id){
+    function remove_user_from_team(team_name, user_id){
         $.ajax({
 
-            url: `/teams/${team_id}/members/${user_id}`,
+            url: `/teams/${team_name}/members/${user_id}`,
             type: 'DELETE',
             success: function (result){
                 location.reload();
