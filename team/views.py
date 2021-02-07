@@ -4,7 +4,7 @@ from flask.views import MethodView, View
 from flask_login import current_user, login_required, login_user, logout_user
 from .forms import TeamCreationForm, TeamUpdateForm, TeamSearchForm, AddUserToTeamForm
 from .models import Team, UserTeam, JoinTeamRequest
-from .exceptions import UserExistInTeam
+from .exceptions import UserExistInTeam, TeamNotFound
 from user.utils import access_level
 from team.utils import is_team_member
 
@@ -48,7 +48,10 @@ class TeamView(MethodView):
 
     def get(self, team_name=None):
         if team_name:
-            team = Team.get_team_by_name(name=team_name)
+            try:
+                team = Team.get_team_by_name(name=team_name)
+            except TeamNotFound:
+                return redirect(url_for("team_bp.teams"))
             team_users = team.get_all_users()
 
             @is_team_member(team=team)
@@ -72,7 +75,10 @@ class TeamView(MethodView):
         form = TeamUpdateForm()
 
         if form.validate_on_submit():
-            team = Team.get_team_by_name(name=team_name)
+            try:
+                team = Team.get_team_by_name(name=team_name)
+            except TeamNotFound:
+                return redirect(url_for("team_bp.teams"))
             
             @is_team_member(team)
             def run_logic():
@@ -155,39 +161,60 @@ class RequestToJoinGroup(MethodView):
         return redirect(url_for("team_bp.teams"))
 
 class RespondToJoinRequest(MethodView):
+    decorators = [login_required, access_level(["super_admin", "admin",])]
+
     def get(self):
         record = JoinTeamRequest.query.get(request.args.get("id"))
-        action = request.args.get("action", None)
-        actions_map = {
-                        "approve": JoinTeamRequest.approve_join_request,
-                        "reject": JoinTeamRequest.reject_join_request,
-                        "1": JoinTeamRequest.approve_join_request,
-                        "0": JoinTeamRequest.reject_join_request,
-                        }
-        
-        if record and action in actions_map:
-            actions_map[action](team=record.team, user_id=record.user_id)        
-        
+        if record:
+            team = record.team
+
+            @is_team_member(team=team)
+            def run_logic():
+                action = request.args.get("action", None)
+                actions_map = {
+                                "approve": JoinTeamRequest.approve_join_request,
+                                "reject": JoinTeamRequest.reject_join_request,
+                                "1": JoinTeamRequest.approve_join_request,
+                                "0": JoinTeamRequest.reject_join_request,
+                                }
+                
+                if record and action in actions_map:
+                    actions_map[action](team=record.team, user_id=record.user_id)        
+                return "Operation completed"
+            run_logic()
+
         return redirect(url_for('team_bp.teams'))
+
+                
 class ToggleTeamStatus(MethodView):
-    decorators = [login_required, ]
+    decorators = [login_required, access_level(["super_admin", ])]
 
     def put(self):
         team_name = request.args["team_name"]
-        team = Team.get_team_by_name(name=team_name)
+        try:
+            team = Team.get_team_by_name(name=team_name)
+        except TeamNotFound:
+            return redirect(url_for("team_bp.teams"))
         team.toggle_status()
         flash(f"{team_name} {'activated' if team.is_active else 'deactivated'}")
         return "operation completed"
 
 class DeleteTeam(MethodView):
-    decorators = [login_required, ]
+    decorators = [login_required, access_level(["admin", "super_admin",]), ]
 
     def delete(self):
         team_name = request.args["team_name"]
-        team = Team.get_team_by_name(name=team_name)
-        team.delete()
-        flash(f"{team_name} deleted")
-        return "operation completed"
+        try:
+            team = Team.get_team_by_name(name=team_name)
+        except TeamNotFound:
+            return redirect(url_for("team_bp.teams"))
+
+        @is_team_member(team=team)
+        def run_logic():
+            team.delete()
+            flash(f"{team_name} deleted")
+            return "operation completed"
+        return run_logic()
 
 def generate_add_user_to_team_form(team_users):
     def get_downlines_not_in_team():
