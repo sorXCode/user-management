@@ -1,5 +1,6 @@
 from app import db
 from uuid import uuid4
+from flask_login import current_user
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -21,13 +22,22 @@ class Message(db.Model):
         db.session.commit()
 
     @classmethod
-    def get_conversation_history(cls, user_a_id, user_b_id):
+    def get_chat_history(cls, user_a_id, user_b_id):
         token = ConversationToken.get_token_for_users(user_a_id, user_b_id)
         # paginate
-        messages = cls.query.filter_by(token=token).sort_by("sent_at").all()
+        messages = cls.query.filter_by(token=token).order_by("sent_at").all()
         return messages
 
+    @classmethod
+    def get_conversations(cls, user_id):
+        tokens = ConversationToken.get_all_conversations(user_id)
+        return [cls.query.filter_by(token=token).order_by("sent_at").first() for token in tokens]
+    
 
+    def __repr__(self):
+        if not current_user.email==self.sender.email:
+            return self.sender.email
+        return self.receiver.email
 class ConversationToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_a_id = db.Column(db.Integer, db.ForeignKey('users.id'))
@@ -49,7 +59,11 @@ class ConversationToken(db.Model):
     @classmethod
     def get_token_for_users(cls, user_a_id, user_b_id):
         message_token = cls.query.filter_by(user_a_id=user_a_id, user_b_id=user_b_id).first() or \
-                        cls.query.filter_by(user_b_id=user_a_id, user_a_id=user_b_id).first() or \
                         cls.create_token(user_a_id=user_a_id, user_b_id=user_b_id)
 
         return message_token.token
+    
+    @classmethod
+    def get_all_conversations(cls, user_id):
+        conversation_tokens = cls.query.filter_by(user_a_id=user_id).all()
+        return [conversation_token.token for conversation_token in conversation_tokens]

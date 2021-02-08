@@ -24,16 +24,14 @@
         {% if users %}
         {% for user in users %}
         <div class="list_icon_text">
-            <p class="text_primary fa fa-user-o"><a href="/users/{{user.email}}">{{ user.email }} ({{ user.get_roles() }})</a></p>
+            <p class="text_primary fa fa-user-o"><i class="fa fa-envelope"><a href="{{url_for('message_bp.message', user_email=user.email)}}">M</a></i><a href="/users/{{user.email}}">{{ user.email }} ({{ user.get_roles() }})</a></p>
         </div>
         
         <div class="edit_user">
             <span class="font_bold text_title"><button onclick="get_user_edit_form('{{user.email}}')"><a href="#editUserModal" rel="modal:open">Edit</a></button></span>
-            <i class="fa fa-pencil"></i>
         </div>
         <div class ="delete_user">
             <span class="font_bold text_title"><button onclick="delete_user('{{user.email}}')">Delete</a></span>
-            <i class="fa fa-trash"></i>
         </div>
         <div>
             <span class="font_bold text_title"><a href="{{url_for('user_bp.toggle_block_status', user_email=user.email)}}">{{ 'Unblock' if user.is_blocked else 'Block'}}</a></span>

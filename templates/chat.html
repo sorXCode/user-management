@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% for message in messages %}
+    {{message.sender}}: {{message.message}}
+    <hr>
+{% endfor %}
+<form action={{url_for('message_bp.message', user_email=user_email)}} method="post">
+    <input type="text" name="message" id="message">
+    <input type="submit" value="Send">
+</form>
+
+{% endblock %}

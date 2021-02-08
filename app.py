@@ -22,9 +22,11 @@ def create_app(environment):
     def register_blueprints(app):
         from user.views import user_bp
         from team.views import team_bp
+        from message.views import message_bp
 
         app.register_blueprint(user_bp)
         app.register_blueprint(team_bp)
+        app.register_blueprint(message_bp)
 
     app = Flask(__name__)
     app.config.from_object(config[environment])
