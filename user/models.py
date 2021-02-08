@@ -7,6 +7,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from .exceptions import InvalidPassword, Unauthorized, UserExists, UserNotFound
 from functools import lru_cache
 from team.models import Team, UserTeam
+from message.models import Message
+
 class Permission(db.Model):
     permissions = (#user permissions
                     "can_create_super_admin",
@@ -134,6 +136,9 @@ class User(UserMixin, db.Model):
     teams = db.relationship("UserTeam", backref="team_member", foreign_keys="[UserTeam.user_id]", lazy="dynamic", cascade="all, delete")
     requests_accepted = db.relationship("UserTeam", backref="admitter", foreign_keys="[UserTeam.admitted_by]", lazy="dynamic", cascade="all, delete")
     pending_requests = db.relationship("JoinTeamRequest", backref="user", foreign_keys="[JoinTeamRequest.user_id]", lazy="dynamic", cascade="all, delete")
+    messages_sent = db.relationship("Message", backref="sender", foreign_keys="[Message.sender_id]", lazy="dynamic", cascade="all, delete")
+    messages_received = db.relationship("Message", backref="sender", foreign_keys="[Message.receiver_id]", lazy="dynamic", cascade="all, delete")
+
 
     @property
     def is_admin(self):
