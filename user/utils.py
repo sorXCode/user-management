@@ -18,6 +18,7 @@ def access_level(levels):
             if user:
                 access["owner"] = user.id==current_user.id
                 access["creator"] = user.upline.id==current_user.id
+                access["child"] = current_user in user.get_downlines()
 
             for user_level in levels:
                 if access.get(user_level, "default"):

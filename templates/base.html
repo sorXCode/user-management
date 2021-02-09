@@ -70,22 +70,22 @@
             </div>
 
             <div class="sidebar_menu">
-                <div class="sidebar_link active_menu_link">
+                <div class="sidebar_link" id="dashboard">
                     <i class="fa fa-home"></i>
                     <a href="{{ url_for('user_bp.dashboard') }}">Dashboard</a>
                 </div>
                 {% if current_user.is_admin or current_user.is_super_admin %}
-                <div class="sidebar_link">
+                <div class="sidebar_link", id="users">
                     <i class="fa fa-user-secret"></i>
                     <a href="{{ url_for('user_bp.users') }}">User Management</a>
                 </div>
                 {% endif %}
-                <div class="sidebar_link">
+                <div class="sidebar_link" id="messages">
                     <i class="fa fa-comment"></i>
-                    <a href="#">Messages</a>
+                    <a href="{{url_for("message_bp.recent_messages")}}">Messages</a>
                 </div>
 
-                <div class="sidebar_link">
+                <div class="sidebar_link" id="teams">
                     <i class="fa fa-handshake-o"></i>
                     <a href="{{ url_for('team_bp.teams') }}">Teams</a>
                 </div>
@@ -110,6 +110,18 @@
                 });
             }
         }
+        $(document).ready(function (){
+            {% set path= request.path.split("/")[1] %}
+            {% if path=="users" %}
+                $("#users").addClass("active_menu_link")
+            {% elif path=="messages" %}
+                $("#messages").addClass("active_menu_link")
+            {% elif path=="teams" %}
+                $("#teams").addClass("active_menu_link")
+            {% else %}
+                $("#dashboard").addClass("active_menu_link")
+            {% endif %}
+        })
         {% block scripts %}{% endblock %}
     </script>
     </div>

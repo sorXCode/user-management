@@ -20,7 +20,7 @@
 
 .list{
     display: grid;
-    grid-template-columns: 5fr 1fr 1fr 1fr;
+    grid-template-columns: 5fr 1fr 1fr 1fr 1fr;
     gap: 30px;
     margin: 20px 20px;
     border-bottom: 1px solid #cecfd5;

@@ -514,6 +514,10 @@ main{
  height:inherit
 }
 
+a, a:visited, a:hover, a:active {
+  color: inherit;
+}
+
 
 @media only screen and (max-width: 978px){
   .container{

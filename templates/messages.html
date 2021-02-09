@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block header_imports %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+{% endblock %}
+
+{% block content %}
+<h3>Messages</h3>
+<div class="user_list">
+    {% for conversation in conversations %}
+    <div class="list">
+        <div class="list_icon_text">
+            <p>
+                <a href="{{url_for('message_bp.message', user_email=conversation)}}"><b>{{conversation}}</b></a>
+            </p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
