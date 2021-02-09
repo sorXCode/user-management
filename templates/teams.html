@@ -30,9 +30,10 @@
                 {% endif %}
             </div>
             <div></div>
+            <div></div>
             {% if current_user.is_super_admin %}
             <div class="edit_user">
-                <span class="font_bold text_primary "><button onclick="toggleTeamStatus('{{team.name}}')">{{'Deactivate' if team.is_active else 'Activate'}}</button></span>
+                <span class="font_bold "><button onclick="toggleTeamStatus('{{team.name}}')">{{'Deactivate' if team.is_active else 'Activate'}}</button></span>
             </div>
             {% else %}
             <div></div>
@@ -65,22 +66,26 @@
 {% endblock %}
 {% block scripts %}
     function toggleTeamStatus(team_name){
+        if (confirm("Are you sure?")){
+            $.ajax({
+            url: `{{url_for('team_bp.toggle_team_status')}}?team_name=${team_name}`,
+            type: 'PUT',
+            success: function (result){
+                location.reload();
+            }
+        });
+        }
+    }
+
+function deleteTeam(team_name){
+    if (confirm("Are you sure you want to delete team?")){
         $.ajax({
-        url: `{{url_for('team_bp.toggle_team_status')}}?team_name=${team_name}`,
-        type: 'PUT',
+        url: `{{url_for('team_bp.delete_team')}}?team_name=${team_name}`,
+        type: 'DELETE',
         success: function (result){
             location.reload();
         }
-    });
-}
-
-function deleteTeam(team_name){
-    $.ajax({
-    url: `{{url_for('team_bp.delete_team')}}?team_name=${team_name}`,
-    type: 'DELETE',
-    success: function (result){
-        location.reload();
+        });
     }
-    });
     }
 {% endblock %}

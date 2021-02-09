@@ -1,13 +1,46 @@
 {% extends 'base.html' %}
 
+{% block header_imports %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+{% endblock %}
 {% block content %}
-{% for message in messages %}
-    {{message.sender}}: {{message.message}}
-    <hr>
-{% endfor %}
-<form action={{url_for('message_bp.message', user_email=user_email)}} method="post">
-    <input type="text" name="message" id="message">
-    <input type="submit" value="Send">
-</form>
 
+{% for message in messages %}
+{% if message.sender.id != current_user.id %}
+  <div class="conversation darker">
+    <div class="author-right">
+        {{message.sender.email.split("@")[0]}}
+    </div>
+    <br>
+    <p>{{message.message}}</p>
+    <span class="time-left">{{message.sent_at}}</span>
+</div>
+{% else %}
+<div class="conversation">
+    <div class="author-left">
+        {{message.sender.email.split("@")[0]}}
+    </div>
+    <br>
+    <p>{{message.message}}</p>
+    <span class="time-right">{{message.sent_at}}</span>
+</div>
+{% endif %}
+{% endfor %}
+
+<div class="conversation">
+    <textarea name="message" id="message" rows="10"></textarea>
+    <button class="right" onclick="send_message()">send</button>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+function send_message(){
+    var value = $("#message").val();
+    console.log(value)
+    if (value){
+        $.post(`{{url_for("message_bp.message", user_email=user_email)}}?message=${value}`, (data, status)=>{
+            location.reload();
+    })
+}}
 {% endblock %}

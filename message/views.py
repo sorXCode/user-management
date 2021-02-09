@@ -21,7 +21,7 @@ class Messages(MethodView):
 
     def post(self, user_email):
         receiver = User.get_user(user_email)
-        message = request.form.get("message")
+        message = request.args.get("message")
         if message:
             message = Message.send_message(receiver, current_user, message)
 
